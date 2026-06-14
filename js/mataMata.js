@@ -1,6 +1,7 @@
 // ============================================
 // MATA-MATA - Chaveamento Completo (48 Seleções)
 // COM EXIBIÇÃO PARCIAL ENQUANTO GRUPOS NÃO TERMINAM
+// CORRIGIDO CONFORME TABELA OFICIAL
 // ============================================
 
 import { results, saveMatchResult, getWinner } from './storage.js';
@@ -22,46 +23,338 @@ window.forcarVencedor16 = function(jogoId, timeVencedor) {
     alert(`✅ Classificado alterado com sucesso!\n\nO time ${timeVencedor} avançará para as oitavas.`);
 };
 
-// Template dos confrontos de 16-avos
+// Template dos confrontos de 16-avos - CORRIGIDO conforme tabela oficial
 const confrontos16AvosTemplate = [
-    { id: '16A_1', pos1: '1A', pos2: '3CDF' }, { id: '16A_2', pos1: '2B', pos2: '1F' },
-    { id: '16A_3', pos1: '1C', pos2: '3ABF' }, { id: '16A_4', pos1: '2D', pos2: '1E' },
-    { id: '16A_5', pos1: '1G', pos2: '3EHI' }, { id: '16A_6', pos1: '2H', pos2: '1J' },
-    { id: '16A_7', pos1: '1I', pos2: '3DJK' }, { id: '16A_8', pos1: '2K', pos2: '1L' },
-    { id: '16A_9', pos1: '1B', pos2: '3ADF' }, { id: '16A_10', pos1: '2F', pos2: '1A' },
-    { id: '16A_11', pos1: '1D', pos2: '3BEG' }, { id: '16A_12', pos1: '2E', pos2: '1C' },
-    { id: '16A_13', pos1: '1H', pos2: '3FGI' }, { id: '16A_14', pos1: '2J', pos2: '1G' },
-    { id: '16A_15', pos1: '1K', pos2: '3HIL' }, { id: '16A_16', pos1: '2L', pos2: '1I' }
+    { id: '73', pos1: '2A', pos2: '2B', local: 'LOS ANGELES', horario: '16H', data: '28 JUN' },
+    { id: '74', pos1: '1E', pos2: '3ABCDF', local: 'BOSTON', horario: '17H30', data: '29 JUN' },
+    { id: '75', pos1: '1F', pos2: '2C', local: 'MONTERREY', horario: '22H', data: '29 JUN' },
+    { id: '76', pos1: '1C', pos2: '2F', local: 'HOUSTON', horario: '14H', data: '29 JUN' },
+    { id: '77', pos1: '1I', pos2: '3CDFGH', local: 'NOVA YORK/NOVA JERSEY', horario: '18H', data: '30 JUN' },
+    { id: '78', pos1: '2E', pos2: '2I', local: 'DALLAS', horario: '14H', data: '30 JUN' },
+    { id: '79', pos1: '1A', pos2: '3CEFHI', local: 'CIDADE DO MÉXICO', horario: '22H', data: '30 JUN' },
+    { id: '80', pos1: '1L', pos2: '3EHIJK', local: 'ATLANTA', horario: '13H', data: '1 JUL' },
+    { id: '81', pos1: '1D', pos2: '3BEFIJ', local: 'SANTA CLARA', horario: '21H', data: '1 JUL' },
+    { id: '82', pos1: '1G', pos2: '3AEHIJ', local: 'SEATTLE', horario: '17H', data: '1 JUL' },
+    { id: '83', pos1: '2K', pos2: '2L', local: 'TORONTO', horario: '20H', data: '2 JUL' },
+    { id: '84', pos1: '1H', pos2: '2J', local: 'LOS ANGELES', horario: '16H', data: '2 JUL' },
+    { id: '85', pos1: '1B', pos2: '3EFGIJ', local: 'VANCOUVER', horario: '8H', data: '3 JUL' },
+    { id: '86', pos1: '1J', pos2: '2H', local: 'MIAMI', horario: '19H', data: '3 JUL' },
+    { id: '87', pos1: '1K', pos2: '3DEIJL', local: 'KANSAS CITY', horario: '22H30', data: '3 JUL' },
+    { id: '88', pos1: '2D', pos2: '2G', local: 'DALLAS', horario: '15H', data: '3 JUL' }
 ];
+
+// Template das oitavas - CORRIGIDO
+const oitavasTemplate = [
+    { id: '89', jogoOrigem1: '74', jogoOrigem2: '77', local: 'FILADÉLFIA', horario: '18H', data: '4 JUL' },
+    { id: '90', jogoOrigem1: '73', jogoOrigem2: '75', local: 'HOUSTON', horario: '14H', data: '4 JUL' },
+    { id: '91', jogoOrigem1: '76', jogoOrigem2: '79', local: 'NOVA YORK/NOVA JERSEY', horario: '17H', data: '5 JUL' },
+    { id: '92', jogoOrigem1: '83', jogoOrigem2: '81', local: 'CIDADE DO MÉXICO', horario: '21H', data: '5 JUL' },
+    { id: '93', jogoOrigem1: '84', jogoOrigem2: '82', local: 'DALLAS', horario: '16H', data: '6 JUL' },
+    { id: '94', jogoOrigem1: '86', jogoOrigem2: '85', local: 'SEATTLE', horario: '21H', data: '6 JUL' },
+    { id: '95', jogoOrigem1: '88', jogoOrigem2: '87', local: 'ATLANTA', horario: '13H', data: '7 JUL' },
+    { id: '96', jogoOrigem1: '80', jogoOrigem2: '78', local: 'VANCOUVER', horario: '17H', data: '7 JUL' }
+];
+
+// Template das quartas - CORRIGIDO
+const quartasTemplate = [
+    { id: '97', jogoOrigem1: '89', jogoOrigem2: '90', local: 'BOSTON', horario: '17H', data: '9 JUL' },
+    { id: '98', jogoOrigem1: '93', jogoOrigem2: '94', local: 'LOS ANGELES', horario: '16H', data: '18 JUL' },
+    { id: '99', jogoOrigem1: '91', jogoOrigem2: '92', local: 'MIAMI', horario: '18H', data: '11 JUL' },
+    { id: '100', jogoOrigem1: '95', jogoOrigem2: '96', local: 'KANSAS CITY', horario: '22H', data: '11 JUL' }
+];
+
+// Template das semifinais - CORRIGIDO
+const semiTemplate = [
+    { id: '101', jogoOrigem1: '97', jogoOrigem2: '98', local: 'DALLAS', horario: '16H', data: '14 JUL' },
+    { id: '102', jogoOrigem1: '99', jogoOrigem2: '100', local: 'ATLANTA', horario: '16H', data: '15 JUL' }
+];
+
+// Template da final
+const finalTemplate = { id: '103', jogoOrigem1: '101', jogoOrigem2: '102', local: 'MIAMI', horario: '18H', data: '18 JUL' };
+
+// Template do terceiro lugar
+const terceiroTemplate = { id: '104', jogoOrigem1: '101', jogoOrigem2: '102', local: 'MIAMI', horario: '15H', data: '17 JUL' };
 
 function getTimePorPosicao(posicao) {
     const classificacao = getClassificacao();
     const melhoresTerceiros = getMelhoresTerceiros();
-    const pos = posicao.charAt(0);
-    const grupo = posicao.charAt(1);
     
-    if (pos === '1' || pos === '2') {
+    // Formato: "1A", "2B", "3ABCDEF" etc.
+    if (posicao.startsWith('1') || posicao.startsWith('2')) {
+        const grupo = posicao.charAt(1);
+        const pos = parseInt(posicao.charAt(0)) - 1;
+        
         const ranking = classificacao[grupo];
-        const idx = parseInt(pos) - 1;
-        if (ranking && ranking[idx] && ranking[idx].jogos === 3) {
-            return ranking[idx].time;
+        if (ranking && ranking[pos] && ranking[pos].jogos === 3) {
+            return ranking[pos].time;
         }
         return null;
     }
     
-    if (pos === '3') {
+    if (posicao.startsWith('3')) {
+        // Formato: "3ABCDEF" - grupos possíveis para terceiros
         const gruposPossiveis = posicao.substring(1).split('');
-        for (let g of gruposPossiveis) {
-            const ranking = classificacao[g];
-            if (ranking && ranking[2] && ranking[2].jogos === 3) {
-                const terceiro = melhoresTerceiros.find(t => t.grupo === g);
-                if (terceiro && terceiro.time === ranking[2].time) {
+        
+        // Pega os melhores terceiros classificados
+        for (let i = 0; i < melhoresTerceiros.length; i++) {
+            const terceiro = melhoresTerceiros[i];
+            if (gruposPossiveis.includes(terceiro.grupo)) {
+                // Verifica se já foi usado em outro confronto
+                if (!this.terceirosUsados) this.terceirosUsados = [];
+                if (!this.terceirosUsados.includes(terceiro.time)) {
+                    this.terceirosUsados.push(terceiro.time);
                     return terceiro.time;
                 }
             }
         }
     }
+    
     return null;
+}
+
+// Função para obter vencedor de um jogo por ID
+function getVencedorPorJogoId(jogoId, dezesseisAvosMap, oitavasMap, quartasMap, semiMap) {
+    // Primeiro verifica nos 16-avos
+    if (dezesseisAvosMap[jogoId]) {
+        return dezesseisAvosMap[jogoId].vencedor;
+    }
+    // Depois nas oitavas
+    if (oitavasMap[jogoId]) {
+        return oitavasMap[jogoId].vencedor;
+    }
+    // Depois nas quartas
+    if (quartasMap[jogoId]) {
+        return quartasMap[jogoId].vencedor;
+    }
+    // Depois nas semi
+    if (semiMap[jogoId]) {
+        return semiMap[jogoId].vencedor;
+    }
+    return null;
+}
+
+export function initChaveamento() {
+    // Reseta o controle de terceiros usados
+    this.terceirosUsados = [];
+    
+    // 1. 16-AVOS DE FINAL (16 jogos)
+    const dezesseisAvos = confrontos16AvosTemplate.map(confronto => {
+        const timeA = getTimePorPosicao.call(this, confronto.pos1);
+        const timeB = getTimePorPosicao.call(this, confronto.pos2);
+        
+        const incompleto = (!timeA || !timeB);
+        
+        const jogo = {
+            id: confronto.id,
+            timeA: timeA || `🏁 ${confronto.pos1}`,
+            timeB: timeB || `🏁 ${confronto.pos2}`,
+            local: confronto.local,
+            horario: confronto.horario,
+            data: confronto.data,
+            resultado: results[confronto.id] || null,
+            vencedor: null,
+            incompleto: incompleto
+        };
+        
+        // Aplica overrides
+        if (!incompleto && overrides16Avos[confronto.id]) {
+            const overrideWinner = overrides16Avos[confronto.id];
+            if (overrideWinner === jogo.timeA || overrideWinner === jogo.timeB) {
+                jogo.vencedor = overrideWinner;
+            }
+        }
+        
+        // Calcula vencedor pelo resultado
+        if (!jogo.vencedor && !incompleto && jogo.resultado) {
+            const winner = getWinner({ id: jogo.id }, jogo.resultado);
+            jogo.vencedor = winner === 'A' ? jogo.timeA : (winner === 'B' ? jogo.timeB : null);
+        }
+        
+        return jogo;
+    });
+    
+    // Cria maps para acesso rápido
+    const dezesseisAvosMap = {};
+    dezesseisAvos.forEach(j => { dezesseisAvosMap[j.id] = j; });
+    
+    // 2. OITAVAS
+    const oitavas = oitavasTemplate.map(confronto => {
+        const timeA = getVencedorPorJogoId(confronto.jogoOrigem1, dezesseisAvosMap, {}, {}, {});
+        const timeB = getVencedorPorJogoId(confronto.jogoOrigem2, dezesseisAvosMap, {}, {}, {});
+        
+        const incompleto = (!timeA || !timeB);
+        
+        const jogo = {
+            id: confronto.id,
+            timeA: timeA || `🏆 VENC.${confronto.jogoOrigem1}`,
+            timeB: timeB || `🏆 VENC.${confronto.jogoOrigem2}`,
+            local: confronto.local,
+            horario: confronto.horario,
+            data: confronto.data,
+            resultado: results[confronto.id] || null,
+            vencedor: null,
+            incompleto: incompleto,
+            jogoOrigem1: confronto.jogoOrigem1,
+            jogoOrigem2: confronto.jogoOrigem2
+        };
+        
+        if (!incompleto && jogo.resultado) {
+            const winner = getWinner({ id: jogo.id }, jogo.resultado);
+            jogo.vencedor = winner === 'A' ? jogo.timeA : (winner === 'B' ? jogo.timeB : null);
+        }
+        
+        return jogo;
+    });
+    
+    const oitavasMap = {};
+    oitavas.forEach(j => { oitavasMap[j.id] = j; });
+    
+    // 3. QUARTAS
+    const quartas = quartasTemplate.map(confronto => {
+        const timeA = getVencedorPorJogoId(confronto.jogoOrigem1, dezesseisAvosMap, oitavasMap, {}, {});
+        const timeB = getVencedorPorJogoId(confronto.jogoOrigem2, dezesseisAvosMap, oitavasMap, {}, {});
+        
+        const incompleto = (!timeA || !timeB);
+        
+        const jogo = {
+            id: confronto.id,
+            timeA: timeA || `🏆 VENC.${confronto.jogoOrigem1}`,
+            timeB: timeB || `🏆 VENC.${confronto.jogoOrigem2}`,
+            local: confronto.local,
+            horario: confronto.horario,
+            data: confronto.data,
+            resultado: results[confronto.id] || null,
+            vencedor: null,
+            incompleto: incompleto,
+            jogoOrigem1: confronto.jogoOrigem1,
+            jogoOrigem2: confronto.jogoOrigem2
+        };
+        
+        if (!incompleto && jogo.resultado) {
+            const winner = getWinner({ id: jogo.id }, jogo.resultado);
+            jogo.vencedor = winner === 'A' ? jogo.timeA : (winner === 'B' ? jogo.timeB : null);
+        }
+        
+        return jogo;
+    });
+    
+    const quartasMap = {};
+    quartas.forEach(j => { quartasMap[j.id] = j; });
+    
+    // 4. SEMIFINAIS
+    const semi = semiTemplate.map(confronto => {
+        const timeA = getVencedorPorJogoId(confronto.jogoOrigem1, dezesseisAvosMap, oitavasMap, quartasMap, {});
+        const timeB = getVencedorPorJogoId(confronto.jogoOrigem2, dezesseisAvosMap, oitavasMap, quartasMap, {});
+        
+        const incompleto = (!timeA || !timeB);
+        
+        const jogo = {
+            id: confronto.id,
+            timeA: timeA || `🏆 VENC.${confronto.jogoOrigem1}`,
+            timeB: timeB || `🏆 VENC.${confronto.jogoOrigem2}`,
+            local: confronto.local,
+            horario: confronto.horario,
+            data: confronto.data,
+            resultado: results[confronto.id] || null,
+            vencedor: null,
+            incompleto: incompleto,
+            jogoOrigem1: confronto.jogoOrigem1,
+            jogoOrigem2: confronto.jogoOrigem2
+        };
+        
+        if (!incompleto && jogo.resultado) {
+            const winner = getWinner({ id: jogo.id }, jogo.resultado);
+            jogo.vencedor = winner === 'A' ? jogo.timeA : (winner === 'B' ? jogo.timeB : null);
+        }
+        
+        return jogo;
+    });
+    
+    const semiMap = {};
+    semi.forEach(j => { semiMap[j.id] = j; });
+    
+    // 5. FINAL
+    let final = null;
+    let terceiroLugar = null;
+    
+    if (semi.length === 2) {
+        const s1 = semi[0];
+        const s2 = semi[1];
+        
+        // Final
+        if (s1.vencedor && s2.vencedor) {
+            final = {
+                id: finalTemplate.id,
+                timeA: s1.vencedor,
+                timeB: s2.vencedor,
+                local: finalTemplate.local,
+                horario: finalTemplate.horario,
+                data: finalTemplate.data,
+                resultado: results[finalTemplate.id] || null,
+                vencedor: null,
+                incompleto: false
+            };
+            if (final.resultado) {
+                const winner = getWinner({ id: finalTemplate.id }, final.resultado);
+                final.vencedor = winner === 'A' ? final.timeA : final.timeB;
+            }
+        } else {
+            final = {
+                id: finalTemplate.id,
+                timeA: s1.vencedor || '🏆 VENC.101',
+                timeB: s2.vencedor || '🏆 VENC.102',
+                local: finalTemplate.local,
+                horario: finalTemplate.horario,
+                data: finalTemplate.data,
+                resultado: null,
+                vencedor: null,
+                incompleto: true
+            };
+        }
+        
+        // Terceiro lugar
+        const perdedorS1 = s1.vencedor === s1.timeA ? s1.timeB : s1.timeA;
+        const perdedorS2 = s2.vencedor === s2.timeA ? s2.timeB : s2.timeA;
+        
+        if (perdedorS1 && perdedorS2 && !s1.incompleto && !s2.incompleto) {
+            terceiroLugar = {
+                id: terceiroTemplate.id,
+                timeA: perdedorS1,
+                timeB: perdedorS2,
+                local: terceiroTemplate.local,
+                horario: terceiroTemplate.horario,
+                data: terceiroTemplate.data,
+                resultado: results[terceiroTemplate.id] || null,
+                vencedor: null,
+                incompleto: false
+            };
+            if (terceiroLugar.resultado) {
+                const winner = getWinner({ id: terceiroTemplate.id }, terceiroLugar.resultado);
+                terceiroLugar.vencedor = winner === 'A' ? terceiroLugar.timeA : terceiroLugar.timeB;
+            }
+        } else {
+            terceiroLugar = {
+                id: terceiroTemplate.id,
+                timeA: perdedorS1 || '🥉 PERD.101',
+                timeB: perdedorS2 || '🥉 PERD.102',
+                local: terceiroTemplate.local,
+                horario: terceiroTemplate.horario,
+                data: terceiroTemplate.data,
+                resultado: null,
+                vencedor: null,
+                incompleto: true
+            };
+        }
+    }
+    
+    return {
+        dezesseisAvos,
+        oitavas,
+        quartas,
+        semi,
+        final,
+        terceiroLugar,
+    };
 }
 
 function formatarResultadoPremium(jogo) {
@@ -97,196 +390,13 @@ function formatarResultadoPremium(jogo) {
     return html;
 }
 
-export function initChaveamento() {
-    // 1. 16-AVOS DE FINAL (16 jogos) - monta apenas os que têm os dois times definidos
-    const dezesseisAvos = confrontos16AvosTemplate
-        .map(confronto => {
-            const timeA = getTimePorPosicao(confronto.pos1);
-            const timeB = getTimePorPosicao(confronto.pos2);
-            
-            // Se algum time não existe, retorna jogo incompleto (placeholders)
-            if (!timeA || !timeB) {
-                return {
-                    id: confronto.id,
-                    timeA: timeA || `🏁 ${confronto.pos1}`,
-                    timeB: timeB || `🏁 ${confronto.pos2}`,
-                    resultado: null,
-                    vencedor: null,
-                    incompleto: true
-                };
-            }
-            
-            return {
-                id: confronto.id,
-                timeA: timeA,
-                timeB: timeB,
-                resultado: results[confronto.id] || null,
-                vencedor: null,
-                incompleto: false
-            };
-        });
-    
-    // Aplica overrides e calcula vencedores
-    dezesseisAvos.forEach(jogo => {
-        if (jogo.incompleto) return;
-        
-        if (overrides16Avos[jogo.id]) {
-            const overrideWinner = overrides16Avos[jogo.id];
-            if (overrideWinner === jogo.timeA || overrideWinner === jogo.timeB) {
-                jogo.vencedor = overrideWinner;
-            }
-        }
-        
-        if (!jogo.vencedor && jogo.resultado) {
-            const winner = getWinner({ id: jogo.id }, jogo.resultado);
-            jogo.vencedor = winner === 'A' ? jogo.timeA : (winner === 'B' ? jogo.timeB : null);
-        }
-    });
-    
-    // 2. OITAVAS - só mostra se ambos os times existirem
-    const oitavas = [];
-    for (let i = 0; i < dezesseisAvos.length; i += 2) {
-        const jogo1 = dezesseisAvos[i];
-        const jogo2 = dezesseisAvos[i+1];
-        
-        let timeA = (jogo1 && jogo1.vencedor) ? jogo1.vencedor : null;
-        let timeB = (jogo2 && jogo2.vencedor) ? jogo2.vencedor : null;
-        
-        const jogo = {
-            id: `O${Math.floor(i/2)+1}`,
-            timeA: timeA,
-            timeB: timeB,
-            resultado: results[`O${Math.floor(i/2)+1}`] || null,
-            vencedor: null,
-            incompleto: (!timeA || !timeB)
-        };
-        
-        if (!jogo.incompleto && jogo.resultado) {
-            const winner = getWinner({ id: jogo.id }, jogo.resultado);
-            jogo.vencedor = winner === 'A' ? jogo.timeA : (winner === 'B' ? jogo.timeB : null);
-        }
-        oitavas.push(jogo);
-    }
-    
-    // 3. QUARTAS
-    const quartas = [];
-    for (let i = 0; i < oitavas.length; i += 2) {
-        const jogo1 = oitavas[i];
-        const jogo2 = oitavas[i+1];
-        
-        let timeA = (jogo1 && jogo1.vencedor) ? jogo1.vencedor : null;
-        let timeB = (jogo2 && jogo2.vencedor) ? jogo2.vencedor : null;
-        
-        const jogo = {
-            id: `Q${Math.floor(i/2)+1}`,
-            timeA: timeA,
-            timeB: timeB,
-            resultado: results[`Q${Math.floor(i/2)+1}`] || null,
-            vencedor: null,
-            incompleto: (!timeA || !timeB)
-        };
-        
-        if (!jogo.incompleto && jogo.resultado) {
-            const winner = getWinner({ id: jogo.id }, jogo.resultado);
-            jogo.vencedor = winner === 'A' ? jogo.timeA : (winner === 'B' ? jogo.timeB : null);
-        }
-        quartas.push(jogo);
-    }
-    
-    // 4. SEMIFINAIS
-    const semi = [];
-    for (let i = 0; i < quartas.length; i += 2) {
-        const jogo1 = quartas[i];
-        const jogo2 = quartas[i+1];
-        
-        let timeA = (jogo1 && jogo1.vencedor) ? jogo1.vencedor : null;
-        let timeB = (jogo2 && jogo2.vencedor) ? jogo2.vencedor : null;
-        
-        const jogo = {
-            id: `S${Math.floor(i/2)+1}`,
-            timeA: timeA,
-            timeB: timeB,
-            resultado: results[`S${Math.floor(i/2)+1}`] || null,
-            vencedor: null,
-            incompleto: (!timeA || !timeB)
-        };
-        
-        if (!jogo.incompleto && jogo.resultado) {
-            const winner = getWinner({ id: jogo.id }, jogo.resultado);
-            jogo.vencedor = winner === 'A' ? jogo.timeA : (winner === 'B' ? jogo.timeB : null);
-        }
-        semi.push(jogo);
-    }
-    
-    // 5. FINAL
-    let final = null;
-    let terceiroLugar = null;
-    
-    if (semi.length === 2) {
-        const s1 = semi[0];
-        const s2 = semi[1];
-        
-        if (s1.vencedor && s2.vencedor) {
-            final = {
-                id: 'F1',
-                timeA: s1.vencedor,
-                timeB: s2.vencedor,
-                resultado: results['F1'] || null,
-                vencedor: null,
-                incompleto: false
-            };
-            if (final.resultado) {
-                const winner = getWinner({ id: 'F1' }, final.resultado);
-                final.vencedor = winner === 'A' ? final.timeA : final.timeB;
-            }
-        } else {
-            final = {
-                id: 'F1',
-                timeA: s1.vencedor || '🏆 ?',
-                timeB: s2.vencedor || '🏆 ?',
-                resultado: null,
-                vencedor: null,
-                incompleto: true
-            };
-        }
-        
-        // Terceiro lugar
-        const perdedorS1 = s1.vencedor === s1.timeA ? s1.timeB : s1.timeA;
-        const perdedorS2 = s2.vencedor === s2.timeA ? s2.timeB : s2.timeA;
-        
-        if (perdedorS1 && perdedorS2 && !s1.incompleto && !s2.incompleto) {
-            terceiroLugar = {
-                id: 'T1',
-                timeA: perdedorS1,
-                timeB: perdedorS2,
-                resultado: results['T1'] || null,
-                vencedor: null,
-                incompleto: false
-            };
-            if (terceiroLugar.resultado) {
-                const winner = getWinner({ id: 'T1' }, terceiroLugar.resultado);
-                terceiroLugar.vencedor = winner === 'A' ? terceiroLugar.timeA : terceiroLugar.timeB;
-            }
-        } else {
-            terceiroLugar = {
-                id: 'T1',
-                timeA: perdedorS1 || '🥉 ?',
-                timeB: perdedorS2 || '🥉 ?',
-                resultado: null,
-                vencedor: null,
-                incompleto: true
-            };
-        }
-    }
-    
-    return {
-        dezesseisAvos,
-        oitavas,
-        quartas,
-        semi,
-        final,
-        terceiroLugar,
-    };
+function renderInfoJogo(jogo) {
+    if (!jogo.local) return '';
+    return `
+        <div class="jogo-info" style="font-size: 10px; color: #aaa; text-align: center; margin-top: 5px; padding-top: 5px; border-top: 1px solid #333;">
+            📍 ${jogo.local} | 🕐 ${jogo.horario} | 📅 ${jogo.data}
+        </div>
+    `;
 }
 
 export function renderMataMata() {
@@ -313,7 +423,7 @@ export function renderMataMata() {
         html += `
             <div class="fase-container">
                 <h3 class="fase-title">⚽ OITAVAS DE FINAL</h3>
-                <div class="jogos-grid">${renderJogosLista(chave.oitavas)}</div>
+                <div class="jogos-grid oitavas-grid">${renderJogosLista(chave.oitavas)}</div>
             </div>
         `;
     }
@@ -322,7 +432,7 @@ export function renderMataMata() {
         html += `
             <div class="fase-container">
                 <h3 class="fase-title">🏅 QUARTAS DE FINAL</h3>
-                <div class="jogos-grid">${renderJogosLista(chave.quartas)}</div>
+                <div class="jogos-grid quartas-grid">${renderJogosLista(chave.quartas)}</div>
             </div>
         `;
     }
@@ -366,10 +476,12 @@ export function renderMataMata() {
             
             const jogoId = el.dataset.jogoId;
             const jogo = encontrarJogoPorId(chave, jogoId);
-            if (jogo && jogo.timeA && jogo.timeB && !jogo.incompleto) {
+            if (jogo && jogo.timeA && jogo.timeB && !jogo.incompleto && !jogo.timeA.includes('🏁') && !jogo.timeB.includes('🏁') && !jogo.timeA.includes('🏆') && !jogo.timeB.includes('🏆')) {
                 abrirModalMataMata(jogo);
             } else if (jogo && jogo.incompleto) {
                 alert('⏳ Este confronto ainda não está disponível.\nComplete os jogos da fase de grupos para definir os classificados.');
+            } else if (jogo && (jogo.timeA.includes('🏁') || jogo.timeB.includes('🏁'))) {
+                alert('⏳ Aguardando definição dos classificados dos grupos.');
             }
         });
     });
@@ -381,8 +493,12 @@ function renderJogosLista(jogos, is16Avos = false) {
     }
     
     return jogos.map(jogo => {
+        const hasRealTeams = jogo.timeA && jogo.timeB && 
+                            !jogo.timeA.includes('🏁') && !jogo.timeB.includes('🏁') &&
+                            !jogo.timeA.includes('🏆') && !jogo.timeB.includes('🏆');
+        
         // Se o jogo está incompleto (time faltando), mostra placeholder
-        if (jogo.incompleto) {
+        if (jogo.incompleto || !hasRealTeams) {
             return `
                 <div class="mata-mata-jogo incomplete" style="opacity: 0.6; background: #1a1a2e;">
                     <div class="jogo-time">
@@ -396,6 +512,7 @@ function renderJogosLista(jogos, is16Avos = false) {
                         <span class="jogo-nome" style="color: #888;">${jogo.timeB || 'Aguardando...'}</span>
                         <span class="jogo-flag">⏳</span>
                     </div>
+                    ${renderInfoJogo(jogo)}
                 </div>
             `;
         }
@@ -444,6 +561,7 @@ function renderJogosLista(jogos, is16Avos = false) {
                     <span class="jogo-nome">${jogo.timeB || '???'}</span>
                     <span class="jogo-flag">${getBandeira(jogo.timeB)}</span>
                 </div>
+                ${renderInfoJogo(jogo)}
             </div>
         `;
     }).join('');
@@ -452,8 +570,12 @@ function renderJogosLista(jogos, is16Avos = false) {
 function renderJogoFinal(jogo) {
     if (!jogo) return '<div class="empty">Aguardando...</div>';
     
+    const hasRealTeams = jogo.timeA && jogo.timeB && 
+                        !jogo.timeA.includes('🏁') && !jogo.timeB.includes('🏁') &&
+                        !jogo.timeA.includes('🏆') && !jogo.timeB.includes('🥉');
+    
     const resultadoHTML = formatarResultadoPremium(jogo);
-    const isIncomplete = jogo.incompleto;
+    const isIncomplete = jogo.incompleto || !hasRealTeams;
     
     return `
         <div class="mata-mata-jogo final-jogo ${jogo.resultado ? 'realizado' : ''} ${isIncomplete ? 'incomplete' : ''}" 
@@ -470,6 +592,7 @@ function renderJogoFinal(jogo) {
                 <span class="jogo-nome final-nome">${jogo.timeB || '???'}</span>
                 <span class="jogo-flag">${isIncomplete ? '🏆' : getBandeira(jogo.timeB)}</span>
             </div>
+            ${renderInfoJogo(jogo)}
         </div>
     `;
 }
@@ -489,6 +612,8 @@ function encontrarJogoPorId(chave, id) {
 
 function abrirModalMataMata(jogo) {
     if (!jogo.timeA || !jogo.timeB || jogo.incompleto) return;
+    if (jogo.timeA.includes('🏁') || jogo.timeB.includes('🏁')) return;
+    if (jogo.timeA.includes('🏆') || jogo.timeB.includes('🏆')) return;
     
     const match = {
         id: jogo.id,
@@ -496,9 +621,9 @@ function abrirModalMataMata(jogo) {
         b: jogo.timeB,
         fa: getBandeira(jogo.timeA),
         fb: getBandeira(jogo.timeB),
-        venue: 'Mata-Mata',
-        time: '00:00',
-        date: new Date().toISOString().split('T')[0],
+        venue: jogo.local || 'Mata-Mata',
+        time: jogo.horario || '00:00',
+        date: jogo.data || new Date().toISOString().split('T')[0],
         g: 'MM'
     };
     
