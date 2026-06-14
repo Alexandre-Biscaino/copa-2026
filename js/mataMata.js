@@ -47,12 +47,12 @@ const confrontos16AvosTemplate = [
 const oitavasTemplate = [
     { id: '89', jogoOrigem1: '74', jogoOrigem2: '77', local: 'FILADÉLFIA', horario: '18H', data: '4 JUL' },
     { id: '90', jogoOrigem1: '73', jogoOrigem2: '75', local: 'HOUSTON', horario: '14H', data: '4 JUL' },
-    { id: '91', jogoOrigem1: '76', jogoOrigem2: '79', local: 'NOVA YORK/NOVA JERSEY', horario: '17H', data: '5 JUL' },
-    { id: '92', jogoOrigem1: '83', jogoOrigem2: '81', local: 'CIDADE DO MÉXICO', horario: '21H', data: '5 JUL' },
-    { id: '93', jogoOrigem1: '84', jogoOrigem2: '82', local: 'DALLAS', horario: '16H', data: '6 JUL' },
-    { id: '94', jogoOrigem1: '86', jogoOrigem2: '85', local: 'SEATTLE', horario: '21H', data: '6 JUL' },
-    { id: '95', jogoOrigem1: '88', jogoOrigem2: '87', local: 'ATLANTA', horario: '13H', data: '7 JUL' },
-    { id: '96', jogoOrigem1: '80', jogoOrigem2: '78', local: 'VANCOUVER', horario: '17H', data: '7 JUL' }
+    { id: '91', jogoOrigem1: '76', jogoOrigem2: '78', local: 'NOVA YORK/NOVA JERSEY', horario: '17H', data: '5 JUL' },
+    { id: '92', jogoOrigem1: '79', jogoOrigem2: '80', local: 'CIDADE DO MÉXICO', horario: '21H', data: '5 JUL' },
+    { id: '93', jogoOrigem1: '83', jogoOrigem2: '84', local: 'DALLAS', horario: '16H', data: '6 JUL' },
+    { id: '94', jogoOrigem1: '81', jogoOrigem2: '82', local: 'SEATTLE', horario: '21H', data: '6 JUL' },
+    { id: '95', jogoOrigem1: '86', jogoOrigem2: '88', local: 'ATLANTA', horario: '13H', data: '7 JUL' },
+    { id: '96', jogoOrigem1: '85', jogoOrigem2: '87', local: 'VANCOUVER', horario: '17H', data: '7 JUL' }
 ];
 
 // Template das quartas
@@ -73,7 +73,7 @@ const semiTemplate = [
 const finalTemplate = { id: '103', jogoOrigem1: '101', jogoOrigem2: '102', local: 'MIAMI', horario: '18H', data: '18 JUL' };
 
 // Template do terceiro lugar
-const terceiroTemplate = { id: '104', jogoOrigem1: '101', jogoOrigem2: '102', local: 'MIAMI', horario: '15H', data: '17 JUL' };
+const terceiroTemplate = { id: '104', jogoOrigem1: '101', jogoOrigem2: '102', local: 'NOVA YORK/NOVA JERSEY', horario: '16H', data: '19 JUL' };
 
 // Variável global para controle de terceiros usados
 let terceirosUsadosGlobal = [];
