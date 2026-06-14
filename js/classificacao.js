@@ -37,7 +37,7 @@ export function initClassificacao() {
     });
 }
 
-// Calcular classificação atualizada com base nos resultados
+// Calcular classificação atualizada com base nos resultados e NOVOS CRITÉRIOS
 export function calcularClassificacao() {
     // Resetar dados
     initClassificacao();
@@ -45,7 +45,7 @@ export function calcularClassificacao() {
     // Percorrer todos os jogos com resultado
     matches.forEach(match => {
         const res = results[match.id];
-        if (!res) return; // Sem resultado ainda
+        if (!res) return;
         
         const winner = getWinner(match, res);
         const golsA = res.goalsA || 0;
@@ -58,16 +58,9 @@ export function calcularClassificacao() {
             timeA.golsPro += golsA;
             timeA.golsContra += golsB;
             timeA.saldo = timeA.golsPro - timeA.golsContra;
-            
-            if (winner === 'A') {
-                timeA.vitorias++;
-                timeA.pontos += 3;
-            } else if (winner === 'B') {
-                timeA.derrotas++;
-            } else {
-                timeA.empates++;
-                timeA.pontos += 1;
-            }
+            if (winner === 'A') { timeA.vitorias++; timeA.pontos += 3; }
+            else if (winner === 'B') { timeA.derrotas++; }
+            else { timeA.empates++; timeA.pontos += 1; }
         }
         
         // Time B
@@ -77,27 +70,40 @@ export function calcularClassificacao() {
             timeB.golsPro += golsB;
             timeB.golsContra += golsA;
             timeB.saldo = timeB.golsPro - timeB.golsContra;
-            
-            if (winner === 'B') {
-                timeB.vitorias++;
-                timeB.pontos += 3;
-            } else if (winner === 'A') {
-                timeB.derrotas++;
-            } else {
-                timeB.empates++;
-                timeB.pontos += 1;
-            }
+            if (winner === 'B') { timeB.vitorias++; timeB.pontos += 3; }
+            else if (winner === 'A') { timeB.derrotas++; }
+            else { timeB.empates++; timeB.pontos += 1; }
         }
     });
     
-    // Ordenar cada grupo
+    // Ordenar cada grupo com os critérios solicitados
     groups.forEach(grupo => {
         const times = Object.values(classificacao[grupo]);
         times.sort((a, b) => {
+            // 1º Passo: Maior número de pontos gerais
             if (a.pontos !== b.pontos) return b.pontos - a.pontos;
+            
+            // Empate em pontos - Tentativa de Confronto Direto
+            const confronto = matches.find(m => 
+                (m.a === a.time && m.b === b.time) || (m.a === b.time && m.b === a.time)
+            );
+            
+            if (confronto) {
+                const res = results[confronto.id];
+                if (res) {
+                    const golsA = confronto.a === a.time ? res.goalsA : res.goalsB;
+                    const golsB = confronto.a === a.time ? res.goalsB : res.goalsA;
+                    // Saldo no confronto direto
+                    if (golsA !== golsB) return golsB - golsA;
+                }
+            }
+            
+            // 2º Passo: Saldo de gols geral e Gols marcados geral
             if (a.saldo !== b.saldo) return b.saldo - a.saldo;
             if (a.golsPro !== b.golsPro) return b.golsPro - a.golsPro;
-            return 0;
+            
+            // Último passo (sem Fair Play / Ranking FIFA): Ordem alfabética
+            return a.time.localeCompare(b.time);
         });
         classificacao[grupo] = times;
     });
@@ -124,7 +130,7 @@ export function getMelhoresTerceiros() {
         if (a.pontos !== b.pontos) return b.pontos - a.pontos;
         if (a.saldo !== b.saldo) return b.saldo - a.saldo;
         if (a.golsPro !== b.golsPro) return b.golsPro - a.golsPro;
-        return 0;
+        return a.time.localeCompare(b.time); // Fallback alfabético
     });
     
     // Retornar os 8 melhores
