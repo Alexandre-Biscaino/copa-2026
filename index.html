@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Copa do Mundo 2026 — Sistema Premium</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">11 Jun — 19 Jul · EUA · México · Canadá</div>
+  <h1>Copa do Mundo 2026</h1>
+  <div class="subtitle">Sistema interativo com resultados, classificação e estatísticas</div>
+  
+  <!-- Navegação -->
+  <div class="nav-tabs">
+    <button class="nav-btn active" id="navJogos">📅 JOGOS</button>
+    <button class="nav-btn" id="navClassificacao">🏆 CLASSIFICAÇÃO</button>
+    <button class="nav-btn" id="navMataMata">🏅 MATA-MATA</button>
+    <button class="nav-btn" id="navEstatisticas">📊 ESTATÍSTICAS</button>
+  </div>
+</header>
+
+<!-- Ticker (próximo jogo) -->
+<div id="ticker-wrap"><div class="ticker" id="ticker"></div></div>
+
+<!-- VIEW: JOGOS -->
+<div id="viewJogos" class="view active-view">
+  <!-- Filtros -->
+  <div class="filters">
+    <input type="text" id="search" placeholder="🔍 Buscar seleção (ex: Brasil, Argentina...)">
+    <select id="statusFilter">
+      <option value="all">📋 Todos os jogos</option>
+      <option value="live">🟢 Em andamento</option>
+      <option value="upcoming">⏳ Próximos</option>
+      <option value="done">✅ Encerrados</option>
+    </select>
+    <select id="dateFilter">
+      <option value="all">📅 Todas as datas</option>
+    </select>
+  </div>
+  
+  <!-- Filtro de grupos -->
+  <div class="group-pills" id="groupPills"></div>
+  
+  <!-- Contador de resultados -->
+  <div class="meta-row">
+    <span id="resultCount"></span>
+    <span>⚽ Clique em qualquer jogo para adicionar o resultado</span>
+  </div>
+  
+  <!-- Lista de jogos -->
+  <div id="list"></div>
+</div>
+
+<!-- VIEW: CLASSIFICAÇÃO -->
+<div id="viewClassificacao" class="view">
+  <div class="meta-row">
+    <span>📊 Tabela de classificação atualizada em tempo real</span>
+    <span>🏆 1º lugar | ✅ 2º lugar | ⚠️ Melhores 3º</span>
+  </div>
+  <div id="gruposList"></div>
+</div>
+
+<!-- VIEW: MATA-MATA -->
+<div id="viewMataMata" class="view">
+    <div class="meta-row">
+        <span>🏆 Chaveamento completo do mata-mata (32 times)</span>
+        <span>⚽ Clique em qualquer jogo para adicionar o resultado</span>
+    </div>
+    <div id="mataMataContainer"></div>
+</div>
+
+<!-- VIEW: ESTATÍSTICAS -->
+<div id="viewEstatisticas" class="view">
+    <div class="meta-row">
+        <span>📊 Estatísticas avançadas da Copa do Mundo 2026</span>
+        <span>🔄 Dados atualizados automaticamente</span>
+    </div>
+    
+    <div class="estatisticas-container">
+        <!-- Cards de resumo -->
+        <div class="stats-cards">
+            <div class="stat-card">
+                <div class="stat-icon">⚽</div>
+                <div class="stat-value" id="totalGols">0</div>
+                <div class="stat-label">Gols Marcados</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🎯</div>
+                <div class="stat-value" id="mediaGols">0</div>
+                <div class="stat-label">Média de Gols/Jogo</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🏆</div>
+                <div class="stat-value" id="totalJogos">0</div>
+                <div class="stat-label">Jogos Realizados</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🔥</div>
+                <div class="stat-value" id="maiorPlacar">0-0</div>
+                <div class="stat-label">Maior Placar</div>
+            </div>
+        </div>
+        
+        <!-- Gráficos -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3 class="chart-title">🎯 MAIORES ARTILHEIROS</h3>
+                <canvas id="artilheirosChart" width="400" height="300"></canvas>
+            </div>
+            
+            <div class="chart-card">
+                <h3 class="chart-title">📊 GOLS POR TIME (TOP 10)</h3>
+                <canvas id="golsTimeChart" width="400" height="300"></canvas>
+            </div>
+            
+            <div class="chart-card">
+                <h3 class="chart-title">🔄 RESULTADOS DO TORNEIO</h3>
+                <canvas id="resultadosChart" width="400" height="300"></canvas>
+            </div>
+            
+            <div class="chart-card">
+                <h3 class="chart-title">⚽ MÉDIA DE GOLS POR GRUPO</h3>
+                <canvas id="golsGrupoChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+        
+        <!-- Tabela de artilheiros detalhada -->
+        <div class="artilheiros-table-container">
+            <h3 class="chart-title">🏅 RANKING DE ARTILHEIROS</h3>
+            <table class="artilheiros-table" id="artilheirosTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Seleção</th>
+                        <th>Gols</th>
+                        <th>Jogos</th>
+                        <th>Média</th>
+                    </tr>
+                </thead>
+                <tbody id="artilheirosTableBody">
+                    <tr><td colspan="5">Carregando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<footer>
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+    <div>
+      📋 REGRAS: Os dois primeiros colocados de cada grupo avançam,<br>
+      além dos oito melhores terceiros colocados.
+    </div>
+    <div style="text-align: right;">
+      ⏱️ Horários de Brasília (GMT-3)<br>
+      📊 Fonte: FIFA / Infográfico Estadão
+    </div>
+  </div>
+</footer>
+
+<!-- Botão de tema escuro/claro -->
+<button class="theme-toggle" id="themeToggle" title="Modo Claro">🌙</button>
+
+<!-- MODAL DE RESULTADOS -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3>🏆 CADASTRAR RESULTADO</h3>
+    <div class="modal-teams" id="modalTeams">
+      <!-- Preenchido via JS -->
+    </div>
+    
+    <div class="input-group">
+      <label>⏱️ TEMPO NORMAL</label>
+      <div class="score-inputs">
+        <input type="number" id="goalsA" min="0" max="20" value="0" placeholder="0">
+        <span style="font-size:24px;align-self:center;">x</span>
+        <input type="number" id="goalsB" min="0" max="20" value="0" placeholder="0">
+      </div>
+    </div>
+
+    <div class="checkbox-group">
+      <label>
+        <input type="checkbox" id="hasExtraTime"> ⏱️ Houve prorrogação?
+      </label>
+      <label>
+        <input type="checkbox" id="hasPenalties"> ⚽ Houve pênaltis?
+      </label>
+    </div>
+
+    <div id="extraTimeFields" class="extra-fields">
+      <div class="input-group">
+        <label>⏱️ PRORROGAÇÃO (gols)</label>
+        <div class="score-inputs">
+          <input type="number" id="etGoalsA" min="0" max="10" value="0" placeholder="0">
+          <span style="font-size:20px;">x</span>
+          <input type="number" id="etGoalsB" min="0" max="10" value="0" placeholder="0">
+        </div>
+      </div>
+    </div>
+
+    <div id="penaltiesFields" class="extra-fields">
+      <div class="input-group">
+        <label>⚽ PÊNALTIS (placar)</label>
+        <div class="score-inputs">
+          <input type="number" id="penA" min="0" max="30" value="0" placeholder="0">
+          <span style="font-size:20px;">x</span>
+          <input type="number" id="penB" min="0" max="30" value="0" placeholder="0">
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-buttons">
+      <button class="btn-save" id="saveResultBtn">💾 SALVAR</button>
+      <button class="btn-cancel" id="closeModalBtn">❌ CANCELAR</button>
+      <button class="btn-reset" id="resetResultBtn">🗑️ LIMPAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts (ordem correta de carregamento) -->
+<script type="module" src="js/dados.js"></script>
+<script type="module" src="js/storage.js"></script>
+<script type="module" src="js/resultados.js"></script>
+<script type="module" src="js/classificacao.js"></script>
+<script type="module" src="script.js"></script>
+
+</body>
+</html>
