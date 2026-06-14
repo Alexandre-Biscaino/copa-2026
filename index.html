@@ -8,6 +8,31 @@
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+    /* Estilos para os botões de backup */
+    .btn-backup {
+        background: var(--card);
+        border: 1px solid var(--line);
+        color: var(--text);
+        padding: 6px 14px;
+        border-radius: 8px;
+        font-family: 'Space Mono', monospace;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        letter-spacing: 0.5px;
+    }
+    .btn-backup:hover {
+        background: var(--card-hover);
+        border-color: var(--green);
+        color: var(--green);
+        transform: translateY(-1px);
+    }
+    .btn-backup:active {
+        transform: translateY(1px);
+    }
+</style>
 </head>
 <body>
 
@@ -47,10 +72,14 @@
   <!-- Filtro de grupos -->
   <div class="group-pills" id="groupPills"></div>
   
-  <!-- Contador de resultados -->
+  <!-- Contador de resultados e botões de backup -->
   <div class="meta-row">
     <span id="resultCount"></span>
-    <span>⚽ Clique em qualquer jogo para adicionar o resultado</span>
+    <div style="display: flex; gap: 12px;">
+      <button id="btnExportar" class="btn-backup" title="Exportar resultados">📤 EXPORTAR</button>
+      <button id="btnImportar" class="btn-backup" title="Importar resultados">📥 IMPORTAR</button>
+      <input type="file" id="fileImportar" accept=".json" style="display: none;">
+    </div>
   </div>
   
   <!-- Lista de jogos -->
@@ -223,11 +252,26 @@
   </div>
 </div>
 
+<!-- MODAL DE NOTIFICAÇÃO PREMIUM -->
+<div id="notificationModal" class="notification-modal">
+    <div class="notification-card">
+        <div class="notification-icon" id="notificationIcon">✅</div>
+        <h3 class="notification-title" id="notificationTitle">Sucesso!</h3>
+        <p class="notification-message" id="notificationMessage">Operação realizada com sucesso.</p>
+        <div class="notification-buttons" id="notificationButtons">
+            <button class="notification-btn notification-btn-confirm" id="notificationConfirmBtn">OK</button>
+        </div>
+    </div>
+</div>
+
 <!-- Scripts (ordem correta de carregamento) -->
 <script type="module" src="js/dados.js"></script>
 <script type="module" src="js/storage.js"></script>
 <script type="module" src="js/resultados.js"></script>
 <script type="module" src="js/classificacao.js"></script>
+<script type="module" src="js/mataMata.js"></script>
+<script type="module" src="js/estatisticas.js"></script>
+<script type="module" src="js/bandeiras.js"></script>
 <script type="module" src="script.js"></script>
 
 </body>

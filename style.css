@@ -812,3 +812,142 @@ img, span, div {
         filter: none !important;
     }
 }
+
+/* ============================================ */
+/* BOTÕES DE BACKUP - EXPORTAR/IMPORTAR         */
+/* ============================================ */
+
+.btn-backup {
+    background: linear-gradient(135deg, var(--card), var(--bg-deep));
+    border: 1px solid var(--line);
+    color: var(--text);
+    padding: 6px 16px;
+    border-radius: 40px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-backup:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+    transform: scale(1.02);
+}
+
+.btn-backup:active {
+    transform: scale(0.98);
+}
+
+/* ============================================ */
+/* MODAL DE NOTIFICAÇÃO PREMIUM                 */
+/* ============================================ */
+
+.notification-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.notification-modal.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.notification-card {
+    background: linear-gradient(135deg, var(--card), var(--bg-deep));
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    max-width: 400px;
+    width: 90%;
+    padding: 32px 28px;
+    text-align: center;
+    transform: scale(0.95);
+    transition: transform 0.3s ease;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+}
+
+.notification-modal.active .notification-card {
+    transform: scale(1);
+}
+
+.notification-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+}
+
+.notification-title {
+    font-family: 'Anton', sans-serif;
+    font-size: 24px;
+    margin-bottom: 12px;
+    color: var(--gold);
+}
+
+.notification-message {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: var(--text-dim);
+    margin-bottom: 24px;
+    line-height: 1.5;
+}
+
+.notification-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.notification-btn {
+    padding: 10px 24px;
+    border-radius: 40px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.notification-btn-confirm {
+    background: var(--green);
+    color: #06241a;
+}
+
+.notification-btn-confirm:hover {
+    filter: brightness(1.1);
+    transform: scale(1.02);
+}
+
+.notification-btn-cancel {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--text);
+}
+
+.notification-btn-cancel:hover {
+    border-color: var(--coral);
+    color: var(--coral);
+}
+
+/* Animação de entrada */
+@keyframes notificationPulse {
+    0% { box-shadow: 0 0 0 0 var(--green); }
+    50% { box-shadow: 0 0 0 10px rgba(47, 207, 142, 0.2); }
+    100% { box-shadow: 0 0 0 0 var(--green); }
+}
+
+.notification-card.success {
+    animation: notificationPulse 0.5s ease;
+}

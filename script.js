@@ -56,6 +56,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Configurar botão de tema
     setupThemeToggle();
     
+    // Configurar botões de backup
+    setupBackup();
+    
     // Renderizar tudo
     renderJogos();
     renderTicker();
@@ -346,6 +349,213 @@ export function renderTicker() {
     `;
 }
 
+// ============================================
+// NOTIFICAÇÃO PREMIUM
+// ============================================
+
+function showNotification(options) {
+    const modal = document.getElementById('notificationModal');
+    const icon = document.getElementById('notificationIcon');
+    const title = document.getElementById('notificationTitle');
+    const message = document.getElementById('notificationMessage');
+    const buttonsDiv = document.getElementById('notificationButtons');
+    
+    // Configurar ícone e título baseado no tipo
+    const tipos = {
+        success: { icon: '✅', title: 'Sucesso!' },
+        error: { icon: '❌', title: 'Erro!' },
+        warning: { icon: '⚠️', title: 'Atenção!' },
+        info: { icon: 'ℹ️', title: 'Informação' },
+        question: { icon: '❓', title: 'Confirmação' }
+    };
+    
+    const tipo = tipos[options.type] || tipos.success;
+    
+    icon.textContent = options.icon || tipo.icon;
+    title.textContent = options.title || tipo.title;
+    message.textContent = options.message || 'Operação realizada com sucesso.';
+    
+    // Limpar botões anteriores
+    buttonsDiv.innerHTML = '';
+    
+    // Criar botões baseado nas opções
+    if (options.buttons && options.buttons.length > 0) {
+        options.buttons.forEach(btn => {
+            const button = document.createElement('button');
+            button.textContent = btn.text;
+            button.className = `notification-btn ${btn.className || 'notification-btn-confirm'}`;
+            button.onclick = () => {
+                closeNotification();
+                if (btn.onClick) btn.onClick();
+            };
+            buttonsDiv.appendChild(button);
+        });
+    } else {
+        // Botão padrão OK
+        const button = document.createElement('button');
+        button.textContent = 'OK';
+        button.className = 'notification-btn notification-btn-confirm';
+        button.onclick = () => {
+            closeNotification();
+            if (options.onConfirm) options.onConfirm();
+        };
+        buttonsDiv.appendChild(button);
+    }
+    
+    // Mostrar modal
+    modal.classList.add('active');
+    
+    // Auto-fechar após 3 segundos se não tiver botões personalizados
+    if (options.autoClose !== false && (!options.buttons || options.buttons.length === 0)) {
+        setTimeout(() => {
+            closeNotification();
+        }, 3000);
+    }
+}
+
+function closeNotification() {
+    const modal = document.getElementById('notificationModal');
+    modal.classList.remove('active');
+}
+
+// Função de confirmação (Yes/No)
+function showConfirm(options) {
+    showNotification({
+        type: 'question',
+        icon: options.icon || '❓',
+        title: options.title || 'Confirmação',
+        message: options.message || 'Tem certeza que deseja continuar?',
+        buttons: [
+            { 
+                text: options.confirmText || 'SIM', 
+                className: 'notification-btn-confirm',
+                onClick: options.onConfirm 
+            },
+            { 
+                text: options.cancelText || 'NÃO', 
+                className: 'notification-btn-cancel',
+                onClick: options.onCancel 
+            }
+        ]
+    });
+}
+
+// ============================================
+// BACKUP - EXPORTAR E IMPORTAR RESULTADOS
+// ============================================
+
+// Exportar resultados para arquivo JSON
+function exportarResultados() {
+    const resultados = localStorage.getItem('copa2026_results');
+    const tema = localStorage.getItem('copa2026_theme');
+    
+    const backup = {
+        version: '1.0',
+        data: new Date().toISOString(),
+        results: resultados ? JSON.parse(resultados) : {},
+        theme: tema || 'dark'
+    };
+    
+    const jsonStr = JSON.stringify(backup, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `copa2026_backup_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    // Notificação premium
+    showNotification({
+        type: 'success',
+        icon: '📥',
+        title: 'Exportado!',
+        message: 'Seus resultados foram salvos com sucesso!',
+        autoClose: true
+    });
+}
+
+// Importar resultados de arquivo JSON
+function importarResultados() {
+    const input = document.getElementById('fileImportar');
+    if (!input) return;
+    input.click();
+    
+    input.onchange = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const backup = JSON.parse(e.target.result);
+                
+                // Importar resultados
+                if (backup.results) {
+                    localStorage.setItem('copa2026_results', JSON.stringify(backup.results));
+                }
+                
+                // Importar tema (opcional)
+                if (backup.theme) {
+                    localStorage.setItem('copa2026_theme', backup.theme);
+                }
+                
+                // Notificação premium com confirmação
+                showConfirm({
+                    icon: '🔄',
+                    title: 'Importar Resultados',
+                    message: 'Dados importados com sucesso! Deseja recarregar a página para ver as alterações?',
+                    confirmText: 'RECARREGAR',
+                    cancelText: 'DEPOIS',
+                    onConfirm: () => {
+                        location.reload();
+                    },
+                    onCancel: () => {
+                        showNotification({
+                            type: 'info',
+                            icon: '👍',
+                            title: 'Ok!',
+                            message: 'Você pode recarregar manualmente depois.',
+                            autoClose: true
+                        });
+                    }
+                });
+                
+            } catch (erro) {
+                showNotification({
+                    type: 'error',
+                    icon: '⚠️',
+                    title: 'Erro ao importar',
+                    message: 'Arquivo inválido ou corrompido. Verifique o arquivo e tente novamente.',
+                    autoClose: true
+                });
+                console.error(erro);
+            }
+        };
+        reader.readAsText(file);
+        
+        // Limpar o input para permitir importar o mesmo arquivo novamente
+        input.value = '';
+    };
+}
+
+// Configurar eventos dos botões de backup
+function setupBackup() {
+    const btnExportar = document.getElementById('btnExportar');
+    const btnImportar = document.getElementById('btnImportar');
+    
+    if (btnExportar) {
+        btnExportar.addEventListener('click', exportarResultados);
+    }
+    
+    if (btnImportar) {
+        btnImportar.addEventListener('click', importarResultados);
+    }
+}
+
 // Funções globais para serem chamadas por outros módulos
 window.renderJogos = renderJogos;
 window.renderTicker = renderTicker;
@@ -353,3 +563,5 @@ window.renderClassificacao = renderClassificacao;
 window.renderMataMata = renderMataMata;
 window.renderEstatisticas = renderEstatisticas;
 window.getBandeira = getBandeira;
+window.showNotification = showNotification;
+window.showConfirm = showConfirm;
