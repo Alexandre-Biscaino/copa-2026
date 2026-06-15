@@ -477,25 +477,33 @@ export function renderMataMata() {
         `;
     }
     
-    if (chave.final) {
-        const hasFinal = !chave.final.incompleto;
-        html += `
-            <div class="final-container">
-                <div class="final-card">
-                    <h3 class="final-title">🏆 FINAL</h3>
-                    ${renderJogoFinal(chave.final)}
-                </div>
-            </div>
-        `;
-    }
-    
-    if (chave.terceiroLugar) {
-        html += `
+    // ============================================
+    // ALTERAÇÃO A: Renderizar Finais (Terceiro Lugar PRIMEIRO, depois a Final)
+    // ============================================
+    if (chave.terceiroLugar || chave.final) {
+        html += `<div class="finais-container">`;
+        
+        // 1. TERCEIRO LUGAR (Vem primeiro conforme solicitado)
+        if (chave.terceiroLugar) {
+            html += `
             <div class="terceiro-card">
                 <h3 class="terceiro-title">🥉 TERCEIRO LUGAR</h3>
-                ${renderJogoFinal(chave.terceiroLugar)}
+                ${renderJogoFinal(chave.terceiroLugar, true)}
             </div>
-        `;
+            `;
+        }
+        
+        // 2. FINAL
+        if (chave.final) {
+            html += `
+            <div class="final-card">
+                <h3 class="final-title">🏆 GRANDE FINAL</h3>
+                ${renderJogoFinal(chave.final, false)}
+            </div>
+            `;
+        }
+        
+        html += `</div>`; // fecha .finais-container
     }
     
     html += `</div>`;
@@ -533,23 +541,25 @@ function renderJogosLista(jogos, is16Avos = false) {
                             !jogo.timeA.includes('🏆') && !jogo.timeB.includes('🏆') &&
                             !jogo.timeA.includes('🥉') && !jogo.timeB.includes('🥉');
         
-        // Se o jogo está incompleto (time faltando), mostra placeholder
+        // ============================================
+        // ALTERAÇÃO C: Jogos incompletos sem style inline
+        // ============================================
         if (jogo.incompleto || !hasRealTeams) {
             return `
-                <div class="mata-mata-jogo incomplete" style="opacity: 0.6; background: #1a1a2e;">
-                    <div class="jogo-time">
-                        <span class="jogo-flag">⏳</span>
-                        <span class="jogo-nome" style="color: #888;">${jogo.timeA || 'Aguardando...'}</span>
-                    </div>
-                    <div class="jogo-placar-container">
-                        <span class="jogo-placar">?</span>
-                    </div>
-                    <div class="jogo-time">
-                        <span class="jogo-nome" style="color: #888;">${jogo.timeB || 'Aguardando...'}</span>
-                        <span class="jogo-flag">⏳</span>
-                    </div>
-                    ${renderInfoJogo(jogo)}
+            <div class="mata-mata-jogo incomplete" data-jogo-id="${jogo.id}">
+                <div class="jogo-time">
+                    <span class="jogo-flag">⏳</span>
+                    <span class="jogo-nome" style="color: var(--text-dim);">${jogo.timeA || 'Aguardando...'}</span>
                 </div>
+                <div class="jogo-placar-container">
+                    <span class="jogo-placar">?</span>
+                </div>
+                <div class="jogo-time">
+                    <span class="jogo-nome" style="color: var(--text-dim);">${jogo.timeB || 'Aguardando...'}</span>
+                    <span class="jogo-flag">⏳</span>
+                </div>
+                ${renderInfoJogo(jogo)}
+            </div>
             `;
         }
         
@@ -603,34 +613,38 @@ function renderJogosLista(jogos, is16Avos = false) {
     }).join('');
 }
 
-function renderJogoFinal(jogo) {
+// ============================================
+// ALTERAÇÃO B: renderJogoFinal com parâmetro isTerceiro
+// ============================================
+function renderJogoFinal(jogo, isTerceiro = false) {
     if (!jogo) return '<div class="empty">Aguardando...</div>';
     
-    const hasRealTeams = jogo.timeA && jogo.timeB && 
-                        !jogo.timeA.includes('🏁') && !jogo.timeB.includes('🏁') &&
-                        !jogo.timeA.includes('🏆') && !jogo.timeB.includes('🏆') &&
-                        !jogo.timeA.includes('🥉') && !jogo.timeB.includes('🥉');
+    const hasRealTeams = jogo.timeA && jogo.timeB &&
+                         !jogo.timeA.includes('🏁') && !jogo.timeB.includes('🏁') &&
+                         !jogo.timeA.includes('🏆') && !jogo.timeB.includes('🏆') &&
+                         !jogo.timeA.includes('🥉') && !jogo.timeB.includes('🥉');
     
     const resultadoHTML = formatarResultadoPremium(jogo);
     const isIncomplete = jogo.incompleto || !hasRealTeams;
-    
+    const jogoClass = isTerceiro ? 'mata-mata-jogo final-jogo terceiro-jogo' : 'mata-mata-jogo final-jogo';
+
     return `
-        <div class="mata-mata-jogo final-jogo ${jogo.resultado ? 'realizado' : ''} ${isIncomplete ? 'incomplete' : ''}" 
-             data-jogo-id="${jogo.id}"
-             style="${isIncomplete ? 'opacity: 0.6;' : ''}">
-            <div class="jogo-time ${jogo.vencedor === jogo.timeA ? 'vencedor' : ''}">
-                <span class="jogo-flag">${isIncomplete ? '🏆' : getBandeira(jogo.timeA)}</span>
-                <span class="jogo-nome final-nome">${jogo.timeA || '???'}</span>
-            </div>
-            <div class="jogo-placar-container">
-                ${resultadoHTML || '<span class="jogo-placar final-placar">x</span>'}
-            </div>
-            <div class="jogo-time ${jogo.vencedor === jogo.timeB ? 'vencedor' : ''}">
-                <span class="jogo-nome final-nome">${jogo.timeB || '???'}</span>
-                <span class="jogo-flag">${isIncomplete ? '🏆' : getBandeira(jogo.timeB)}</span>
-            </div>
-            ${renderInfoJogo(jogo)}
+    <div class="${jogoClass} ${jogo.resultado ? 'realizado' : ''} ${isIncomplete ? 'incomplete' : ''}"
+         data-jogo-id="${jogo.id}"
+         style="${isIncomplete ? 'opacity: 0.6;' : ''}">
+        <div class="jogo-time ${jogo.vencedor === jogo.timeA ? 'vencedor' : ''}">
+            <span class="jogo-flag">${isIncomplete ? '🏆' : getBandeira(jogo.timeA)}</span>
+            <span class="jogo-nome final-nome">${jogo.timeA || '???'}</span>
         </div>
+        <div class="jogo-placar-container">
+            ${resultadoHTML || '<span class="jogo-placar final-placar">x</span>'}
+        </div>
+        <div class="jogo-time ${jogo.vencedor === jogo.timeB ? 'vencedor' : ''}">
+            <span class="jogo-nome final-nome">${jogo.timeB || '???'}</span>
+            <span class="jogo-flag">${isIncomplete ? '🏆' : getBandeira(jogo.timeB)}</span>
+        </div>
+        ${renderInfoJogo(jogo)}
+    </div>
     `;
 }
 
