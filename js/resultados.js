@@ -256,6 +256,7 @@ function showNotification(message, type = 'success') {
 
 // ============================================
 // FUNÇÃO PREMIUM - EXIBE RESULTADO EM CARDS SEPARADOS
+// (SEM ARTILHEIROS - APENAS PLACAR E PRORROGAÇÃO/PÊNALTIS)
 // ============================================
 export function getMatchResultText(match) {
     const res = results[match.id];
@@ -274,10 +275,7 @@ export function getMatchResultText(match) {
         iconPenaltis = vencedor ? '🏆' : '❌';
     }
     
-    // Ícone de prorrogação
-    const iconProrrogacao = temProrrogacao ? '⏱️' : '';
-    
-    // Montar HTML com cards separados
+    // Montar HTML com cards separados (SEM ARTILHEIROS)
     let html = `<div class="result-premium-container">`;
     html += `<div class="result-teams">${getBandeira(match.fa)} ${match.a} vs ${match.b} ${getBandeira(match.fb)}</div>`;
     html += `<div class="result-cards">`;
@@ -310,29 +308,8 @@ export function getMatchResultText(match) {
         `;
     }
     
-    // Card 4: Artilheiros (se houver)
-    if (res.artilheiros) {
-        html += `
-            <div class="result-card result-card-artilheiros">
-                <div class="result-card-title">⚽ ARTILHEIROS</div>
-                <div class="result-card-score" style="font-size: 14px; font-family: 'Inter', sans-serif; font-weight: 400;">
-                    ${res.artilheiros}
-                </div>
-            </div>
-        `;
-    }
-    
-    // Card 5: Gols Contra (se houver)
-    if (res.golsContra) {
-        html += `
-            <div class="result-card result-card-gols-contra">
-                <div class="result-card-title">⚠️ GOLS CONTRA</div>
-                <div class="result-card-score" style="font-size: 14px; font-family: 'Inter', sans-serif; font-weight: 400; color: #ff6b5e;">
-                    ${res.golsContra}
-                </div>
-            </div>
-        `;
-    }
+    // Card 4: Artilheiros NÃO é mais exibido aqui
+    // Os artilheiros ficam apenas no modal de edição
     
     html += `</div></div>`;
     
