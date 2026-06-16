@@ -1,12 +1,10 @@
 // ============================================
 // MATA-MATA - Chaveamento Completo (48 Seleções)
-// COM EXIBIÇÃO PARCIAL ENQUANTO GRUPOS NÃO TERMINAM
-// CORRIGIDO CONFORME TABELA OFICIAL
+// COM NOTIFICAÇÕES PREMIUM
 // ============================================
 
-import { results, saveMatchResult, getWinner } from './storage.js';
+import { results, getWinner } from './storage.js';
 import { getClassificacao, getMelhoresTerceiros } from './classificacao.js';
-import { getMatchResultText, getMatchResultTextSimple } from './resultados.js';
 import { getBandeira } from './bandeiras.js';
 
 // --- SISTEMA DE OVERRIDE MANUAL PARA 16-AVOS ---
@@ -20,10 +18,12 @@ window.forcarVencedor16 = function(jogoId, timeVencedor) {
     }
     localStorage.setItem('overrides16Avos', JSON.stringify(overrides16Avos));
     renderMataMata();
-    alert(`✅ Classificado alterado com sucesso!\n\nO time ${timeVencedor} avançará para as oitavas.`);
+    
+    // Notificação premium
+    showNotification(`✅ Classificado alterado com sucesso! O time ${timeVencedor} avançará para as oitavas.`, 'success');
 };
 
-// Template dos confrontos de 16-avos - Conforme tabela oficial
+// Template dos confrontos de 16-avos
 const confrontos16AvosTemplate = [
     { id: '73', pos1: '2A', pos2: '2B', local: 'LOS ANGELES', horario: '16H', data: '28 JUN' },
     { id: '74', pos1: '1E', pos2: '3ABCDF', local: 'BOSTON', horario: '17H30', data: '29 JUN' },
@@ -75,18 +75,15 @@ const finalTemplate = { id: '103', jogoOrigem1: '101', jogoOrigem2: '102', local
 // Template do terceiro lugar
 const terceiroTemplate = { id: '104', jogoOrigem1: '101', jogoOrigem2: '102', local: 'NOVA YORK/NOVA JERSEY', horario: '16H', data: '19 JUL' };
 
-// Variável global para controle de terceiros usados
 let terceirosUsadosGlobal = [];
 
 function getTimePorPosicao(posicao) {
     const classificacao = getClassificacao();
     const melhoresTerceiros = getMelhoresTerceiros();
     
-    // Formato: "1A", "2B", "3ABCDEF" etc.
     if (posicao.startsWith('1') || posicao.startsWith('2')) {
         const grupo = posicao.charAt(1);
         const pos = parseInt(posicao.charAt(0)) - 1;
-        
         const ranking = classificacao[grupo];
         if (ranking && ranking[pos] && ranking[pos].jogos === 3) {
             return ranking[pos].time;
@@ -95,14 +92,10 @@ function getTimePorPosicao(posicao) {
     }
     
     if (posicao.startsWith('3')) {
-        // Formato: "3ABCDEF" - grupos possíveis para terceiros
         const gruposPossiveis = posicao.substring(1).split('');
-        
-        // Pega os melhores terceiros classificados
         for (let i = 0; i < melhoresTerceiros.length; i++) {
             const terceiro = melhoresTerceiros[i];
             if (gruposPossiveis.includes(terceiro.grupo)) {
-                // Verifica se já foi usado em outro confronto
                 if (!terceirosUsadosGlobal.includes(terceiro.time)) {
                     terceirosUsadosGlobal.push(terceiro.time);
                     return terceiro.time;
@@ -110,25 +103,19 @@ function getTimePorPosicao(posicao) {
             }
         }
     }
-    
     return null;
 }
 
-// Função para obter vencedor de um jogo por ID
 function getVencedorPorJogoId(jogoId, dezesseisAvosMap, oitavasMap, quartasMap, semiMap) {
-    // Primeiro verifica nos 16-avos
     if (dezesseisAvosMap && dezesseisAvosMap[jogoId]) {
         return dezesseisAvosMap[jogoId].vencedor;
     }
-    // Depois nas oitavas
     if (oitavasMap && oitavasMap[jogoId]) {
         return oitavasMap[jogoId].vencedor;
     }
-    // Depois nas quartas
     if (quartasMap && quartasMap[jogoId]) {
         return quartasMap[jogoId].vencedor;
     }
-    // Depois nas semi
     if (semiMap && semiMap[jogoId]) {
         return semiMap[jogoId].vencedor;
     }
@@ -136,20 +123,17 @@ function getVencedorPorJogoId(jogoId, dezesseisAvosMap, oitavasMap, quartasMap, 
 }
 
 export function initChaveamento() {
-    // Reseta o controle de terceiros usados
     terceirosUsadosGlobal = [];
     
-    // 1. 16-AVOS DE FINAL (16 jogos)
     const dezesseisAvos = confrontos16AvosTemplate.map(confronto => {
         const timeA = getTimePorPosicao(confronto.pos1);
         const timeB = getTimePorPosicao(confronto.pos2);
-        
         const incompleto = (!timeA || !timeB);
         
         const jogo = {
             id: confronto.id,
-            timeA: timeA || `🏁 ${confronto.pos1}`,
-            timeB: timeB || `🏁 ${confronto.pos2}`,
+            timeA: timeA || null,
+            timeB: timeB || null,
             local: confronto.local,
             horario: confronto.horario,
             data: confronto.data,
@@ -158,7 +142,6 @@ export function initChaveamento() {
             incompleto: incompleto
         };
         
-        // Aplica overrides
         if (!incompleto && overrides16Avos[confronto.id]) {
             const overrideWinner = overrides16Avos[confronto.id];
             if (overrideWinner === jogo.timeA || overrideWinner === jogo.timeB) {
@@ -166,7 +149,6 @@ export function initChaveamento() {
             }
         }
         
-        // Calcula vencedor pelo resultado
         if (!jogo.vencedor && !incompleto && jogo.resultado) {
             const winner = getWinner({ id: jogo.id }, jogo.resultado);
             jogo.vencedor = winner === 'A' ? jogo.timeA : (winner === 'B' ? jogo.timeB : null);
@@ -175,21 +157,18 @@ export function initChaveamento() {
         return jogo;
     });
     
-    // Cria maps para acesso rápido
     const dezesseisAvosMap = {};
     dezesseisAvos.forEach(j => { dezesseisAvosMap[j.id] = j; });
     
-    // 2. OITAVAS
     const oitavas = oitavasTemplate.map(confronto => {
         const timeA = getVencedorPorJogoId(confronto.jogoOrigem1, dezesseisAvosMap, null, null, null);
         const timeB = getVencedorPorJogoId(confronto.jogoOrigem2, dezesseisAvosMap, null, null, null);
-        
         const incompleto = (!timeA || !timeB);
         
         const jogo = {
             id: confronto.id,
-            timeA: timeA || `🏆 VENC.${confronto.jogoOrigem1}`,
-            timeB: timeB || `🏆 VENC.${confronto.jogoOrigem2}`,
+            timeA: timeA || null,
+            timeB: timeB || null,
             local: confronto.local,
             horario: confronto.horario,
             data: confronto.data,
@@ -211,17 +190,15 @@ export function initChaveamento() {
     const oitavasMap = {};
     oitavas.forEach(j => { oitavasMap[j.id] = j; });
     
-    // 3. QUARTAS
     const quartas = quartasTemplate.map(confronto => {
         const timeA = getVencedorPorJogoId(confronto.jogoOrigem1, dezesseisAvosMap, oitavasMap, null, null);
         const timeB = getVencedorPorJogoId(confronto.jogoOrigem2, dezesseisAvosMap, oitavasMap, null, null);
-        
         const incompleto = (!timeA || !timeB);
         
         const jogo = {
             id: confronto.id,
-            timeA: timeA || `🏆 VENC.${confronto.jogoOrigem1}`,
-            timeB: timeB || `🏆 VENC.${confronto.jogoOrigem2}`,
+            timeA: timeA || null,
+            timeB: timeB || null,
             local: confronto.local,
             horario: confronto.horario,
             data: confronto.data,
@@ -243,17 +220,15 @@ export function initChaveamento() {
     const quartasMap = {};
     quartas.forEach(j => { quartasMap[j.id] = j; });
     
-    // 4. SEMIFINAIS
     const semi = semiTemplate.map(confronto => {
         const timeA = getVencedorPorJogoId(confronto.jogoOrigem1, dezesseisAvosMap, oitavasMap, quartasMap, null);
         const timeB = getVencedorPorJogoId(confronto.jogoOrigem2, dezesseisAvosMap, oitavasMap, quartasMap, null);
-        
         const incompleto = (!timeA || !timeB);
         
         const jogo = {
             id: confronto.id,
-            timeA: timeA || `🏆 VENC.${confronto.jogoOrigem1}`,
-            timeB: timeB || `🏆 VENC.${confronto.jogoOrigem2}`,
+            timeA: timeA || null,
+            timeB: timeB || null,
             local: confronto.local,
             horario: confronto.horario,
             data: confronto.data,
@@ -275,7 +250,6 @@ export function initChaveamento() {
     const semiMap = {};
     semi.forEach(j => { semiMap[j.id] = j; });
     
-    // 5. FINAL
     let final = null;
     let terceiroLugar = null;
     
@@ -283,7 +257,6 @@ export function initChaveamento() {
         const s1 = semi[0];
         const s2 = semi[1];
         
-        // Final
         if (s1.vencedor && s2.vencedor) {
             final = {
                 id: finalTemplate.id,
@@ -303,8 +276,8 @@ export function initChaveamento() {
         } else {
             final = {
                 id: finalTemplate.id,
-                timeA: s1.vencedor || '🏆 VENC.101',
-                timeB: s2.vencedor || '🏆 VENC.102',
+                timeA: s1.vencedor || null,
+                timeB: s2.vencedor || null,
                 local: finalTemplate.local,
                 horario: finalTemplate.horario,
                 data: finalTemplate.data,
@@ -314,12 +287,10 @@ export function initChaveamento() {
             };
         }
         
-        // Terceiro lugar
         const perdedorS1 = s1.vencedor === s1.timeA ? s1.timeB : s1.timeA;
         const perdedorS2 = s2.vencedor === s2.timeA ? s2.timeB : s2.timeA;
         
-        if (perdedorS1 && perdedorS2 && !s1.incompleto && !s2.incompleto && 
-            !perdedorS1.includes('🏆') && !perdedorS2.includes('🏆')) {
+        if (perdedorS1 && perdedorS2 && !s1.incompleto && !s2.incompleto) {
             terceiroLugar = {
                 id: terceiroTemplate.id,
                 timeA: perdedorS1,
@@ -338,8 +309,8 @@ export function initChaveamento() {
         } else {
             terceiroLugar = {
                 id: terceiroTemplate.id,
-                timeA: perdedorS1 || '🥉 PERD.101',
-                timeB: perdedorS2 || '🥉 PERD.102',
+                timeA: perdedorS1 || null,
+                timeB: perdedorS2 || null,
                 local: terceiroTemplate.local,
                 horario: terceiroTemplate.horario,
                 data: terceiroTemplate.data,
@@ -350,14 +321,7 @@ export function initChaveamento() {
         }
     }
     
-    return {
-        dezesseisAvos,
-        oitavas,
-        quartas,
-        semi,
-        final,
-        terceiroLugar,
-    };
+    return { dezesseisAvos, oitavas, quartas, semi, final, terceiroLugar };
 }
 
 function formatarResultadoPremium(jogo) {
@@ -394,13 +358,59 @@ function formatarResultadoPremium(jogo) {
 }
 
 function renderInfoJogo(jogo) {
-    if (!jogo.local) return '';
+    if (!jogo || !jogo.local) return '';
     return `
-        <div class="jogo-info" style="font-size: 10px; color: #aaa; text-align: center; margin-top: 5px; padding-top: 5px; border-top: 1px solid #333;">
+        <div class="jogo-info" style="font-size: 10px; color: var(--text-dim); text-align: center; margin-top: 5px; padding-top: 5px; border-top: 1px solid var(--line);">
             📍 ${jogo.local} | 🕐 ${jogo.horario} | 📅 ${jogo.data}
         </div>
     `;
 }
+
+// ============================================
+// NOTIFICAÇÃO PREMIUM
+// ============================================
+
+function showNotification(message, type = 'success') {
+    const notificationModal = document.getElementById('notificationModal');
+    const notificationIcon = document.getElementById('notificationIcon');
+    const notificationTitle = document.getElementById('notificationTitle');
+    const notificationMessage = document.getElementById('notificationMessage');
+    const notificationConfirmBtn = document.getElementById('notificationConfirmBtn');
+    
+    if (!notificationModal) return;
+    
+    const types = {
+        success: { icon: '✅', title: 'Sucesso!' },
+        error: { icon: '❌', title: 'Erro!' },
+        info: { icon: 'ℹ️', title: 'Informação' },
+        warning: { icon: '⚠️', title: 'Atenção' }
+    };
+    
+    const config = types[type] || types.success;
+    notificationIcon.textContent = config.icon;
+    notificationTitle.textContent = config.title;
+    notificationMessage.textContent = message;
+    
+    notificationModal.classList.add('active');
+    
+    notificationConfirmBtn.onclick = () => {
+        notificationModal.classList.remove('active');
+    };
+    
+    notificationModal.onclick = (e) => {
+        if (e.target === notificationModal) {
+            notificationModal.classList.remove('active');
+        }
+    };
+    
+    setTimeout(() => {
+        notificationModal.classList.remove('active');
+    }, 5000);
+}
+
+// ============================================
+// RENDERIZAÇÃO PRINCIPAL
+// ============================================
 
 export function renderMataMata() {
     const container = document.getElementById('mataMataContainer');
@@ -408,59 +418,68 @@ export function renderMataMata() {
     
     const chave = initChaveamento();
     
-    // Conta quantos jogos estão disponíveis
-    const jogosDisponiveis = chave.dezesseisAvos.filter(j => !j.incompleto && j.timeA && j.timeB && !j.timeA.includes('🏁') && !j.timeB.includes('🏁')).length;
+    // Verificar se há jogos disponíveis
+    const jogosDisponiveis = chave.dezesseisAvos.filter(j => !j.incompleto && j.timeA && j.timeB).length;
+    const totalJogos = chave.dezesseisAvos.length;
+    
+    // Verificar se a fase de grupos está completa
+    const temAlgumJogo = chave.dezesseisAvos.some(j => !j.incompleto && j.timeA && j.timeB);
     
     let html = `
         <div class="mata-mata-container">
             <h2 class="mata-mata-title">🏆 FASE DE MATA-MATA</h2>
-            <div style="margin-bottom: 15px; padding: 8px; background: #2a2a2a; border-radius: 8px; text-align: center; font-size: 12px; color: #ffd700;">
+            <div style="margin-bottom: 20px; padding: 12px; background: var(--card); border-radius: 12px; text-align: center; font-size: 13px; color: var(--gold); border: 1px solid var(--line);">
                 ℹ️ Os confrontos vão aparecendo conforme os grupos são finalizados<br>
-                <strong>📊 Jogos disponíveis: ${jogosDisponiveis}/16</strong>
-            </div>
-            
-            <div class="fase-container">
-                <h3 class="fase-title">🔥 16-AVOS DE FINAL</h3>
-                <div class="jogos-grid">${renderJogosLista(chave.dezesseisAvos, true)}</div>
+                <strong>📊 Jogos disponíveis: ${jogosDisponiveis}/${totalJogos}</strong>
             </div>
     `;
     
-    // Só mostra fases seguintes se houver jogos avançados
-    const hasOitavas = chave.oitavas.some(j => !j.incompleto);
-    if (hasOitavas || chave.oitavas.length > 0) {
+    // 16-AVOS
+    html += `
+        <div class="fase-container">
+            <h3 class="fase-title">🔥 16-AVOS DE FINAL</h3>
+            <div class="jogos-grid">${renderJogosLista(chave.dezesseisAvos, true)}</div>
+        </div>
+    `;
+    
+    // OITAVAS - só mostra se houver jogos
+    const hasOitavas = chave.oitavas.some(j => !j.incompleto && j.timeA && j.timeB);
+    if (hasOitavas) {
         html += `
             <div class="fase-container">
                 <h3 class="fase-title">⚽ OITAVAS DE FINAL</h3>
-                <div class="jogos-grid oitavas-grid">${renderJogosLista(chave.oitavas)}</div>
+                <div class="jogos-grid">${renderJogosLista(chave.oitavas)}</div>
             </div>
         `;
     } else {
         html += `
             <div class="fase-container">
                 <h3 class="fase-title">⚽ OITAVAS DE FINAL</h3>
-                <div class="empty-message">Aguardando resultados dos 16-avos...</div>
+                <div class="empty-message">⏳ Aguardando resultados dos 16-avos...</div>
             </div>
         `;
     }
     
-    const hasQuartas = chave.quartas.some(j => !j.incompleto);
+    // QUARTAS
+    const hasQuartas = chave.quartas.some(j => !j.incompleto && j.timeA && j.timeB);
     if (hasQuartas) {
         html += `
             <div class="fase-container">
                 <h3 class="fase-title">🏅 QUARTAS DE FINAL</h3>
-                <div class="jogos-grid quartas-grid">${renderJogosLista(chave.quartas)}</div>
+                <div class="jogos-grid">${renderJogosLista(chave.quartas)}</div>
             </div>
         `;
     } else {
         html += `
             <div class="fase-container">
                 <h3 class="fase-title">🏅 QUARTAS DE FINAL</h3>
-                <div class="empty-message">Aguardando resultados das oitavas...</div>
+                <div class="empty-message">⏳ Aguardando resultados das oitavas...</div>
             </div>
         `;
     }
     
-    const hasSemi = chave.semi.some(j => !j.incompleto);
+    // SEMIFINAIS
+    const hasSemi = chave.semi.some(j => !j.incompleto && j.timeA && j.timeB);
     if (hasSemi) {
         html += `
             <div class="fase-container">
@@ -472,18 +491,15 @@ export function renderMataMata() {
         html += `
             <div class="fase-container">
                 <h3 class="fase-title">🌟 SEMIFINAIS</h3>
-                <div class="empty-message">Aguardando resultados das quartas...</div>
+                <div class="empty-message">⏳ Aguardando resultados das quartas...</div>
             </div>
         `;
     }
     
-    // ============================================
-    // ALTERAÇÃO A: Renderizar Finais (Terceiro Lugar PRIMEIRO, depois a Final)
-    // ============================================
-    if (chave.terceiroLugar || chave.final) {
+    // FINAIS
+    if (chave.final || chave.terceiroLugar) {
         html += `<div class="finais-container">`;
         
-        // 1. TERCEIRO LUGAR (Vem primeiro conforme solicitado)
         if (chave.terceiroLugar) {
             html += `
             <div class="terceiro-card">
@@ -493,7 +509,6 @@ export function renderMataMata() {
             `;
         }
         
-        // 2. FINAL
         if (chave.final) {
             html += `
             <div class="final-card">
@@ -503,7 +518,7 @@ export function renderMataMata() {
             `;
         }
         
-        html += `</div>`; // fecha .finais-container
+        html += `</div>`;
     }
     
     html += `</div>`;
@@ -516,15 +531,12 @@ export function renderMataMata() {
             
             const jogoId = el.dataset.jogoId;
             const jogo = encontrarJogoPorId(chave, jogoId);
-            if (jogo && jogo.timeA && jogo.timeB && !jogo.incompleto && 
-                !jogo.timeA.includes('🏁') && !jogo.timeB.includes('🏁') && 
-                !jogo.timeA.includes('🏆') && !jogo.timeB.includes('🏆') &&
-                !jogo.timeA.includes('🥉') && !jogo.timeB.includes('🥉')) {
+            if (jogo && jogo.timeA && jogo.timeB && !jogo.incompleto) {
                 abrirModalMataMata(jogo);
             } else if (jogo && jogo.incompleto) {
-                alert('⏳ Este confronto ainda não está disponível.\nComplete os jogos da fase de grupos para definir os classificados.');
-            } else if (jogo && (jogo.timeA.includes('🏁') || jogo.timeB.includes('🏁'))) {
-                alert('⏳ Aguardando definição dos classificados dos grupos.');
+                showNotification('⏳ Este confronto ainda não está disponível. Complete os jogos da fase de grupos.', 'warning');
+            } else if (!jogo) {
+                showNotification('⏳ Aguardando definição dos classificados.', 'info');
             }
         });
     });
@@ -532,33 +544,28 @@ export function renderMataMata() {
 
 function renderJogosLista(jogos, is16Avos = false) {
     if (!jogos || jogos.length === 0) {
-        return '<div class="empty">Aguardando definição dos confrontos...</div>';
+        return '<div class="empty-message">⏳ Aguardando definição dos confrontos...</div>';
     }
     
     return jogos.map(jogo => {
-        const hasRealTeams = jogo.timeA && jogo.timeB && 
-                            !jogo.timeA.includes('🏁') && !jogo.timeB.includes('🏁') &&
-                            !jogo.timeA.includes('🏆') && !jogo.timeB.includes('🏆') &&
-                            !jogo.timeA.includes('🥉') && !jogo.timeB.includes('🥉');
+        const hasRealTeams = jogo.timeA && jogo.timeB;
         
-        // ============================================
-        // ALTERAÇÃO C: Jogos incompletos sem style inline
-        // ============================================
+        // Jogos incompletos
         if (jogo.incompleto || !hasRealTeams) {
             return `
             <div class="mata-mata-jogo incomplete" data-jogo-id="${jogo.id}">
                 <div class="jogo-time">
                     <span class="jogo-flag">⏳</span>
-                    <span class="jogo-nome" style="color: var(--text-dim);">${jogo.timeA || 'Aguardando...'}</span>
+                    <span class="jogo-nome" style="color: var(--text-dim);">Aguardando...</span>
                 </div>
                 <div class="jogo-placar-container">
-                    <span class="jogo-placar">?</span>
+                    <span class="jogo-placar" style="color: var(--text-dim);">?</span>
                 </div>
                 <div class="jogo-time">
-                    <span class="jogo-nome" style="color: var(--text-dim);">${jogo.timeB || 'Aguardando...'}</span>
+                    <span class="jogo-nome" style="color: var(--text-dim);">Aguardando...</span>
                     <span class="jogo-flag">⏳</span>
                 </div>
-                ${renderInfoJogo(jogo)}
+                ${jogo.local ? `<div class="jogo-info" style="opacity: 0.5;">📍 ${jogo.local} | 🕐 ${jogo.horario} | 📅 ${jogo.data}</div>` : ''}
             </div>
             `;
         }
@@ -568,66 +575,56 @@ function renderJogosLista(jogos, is16Avos = false) {
         let editBtn = '';
         if (is16Avos && jogo.resultado) {
             const isOverridden = overrides16Avos[jogo.id] ? true : false;
-            const overrideText = isOverridden ? ' (Override ativo)' : '';
-            
             editBtn = `
                 <button class="btn-override" 
-                        style="background:${isOverridden ? '#ff9800' : 'var(--card)'}; 
-                               border:1px solid #fff; 
-                               border-radius:5px; 
+                        style="background:${isOverridden ? '#ff9800' : 'rgba(255,255,255,0.05)'}; 
+                               border:1px solid ${isOverridden ? '#ff9800' : 'var(--line)'}; 
+                               border-radius:6px; 
                                font-size:10px; 
-                               padding:3px 6px; 
+                               padding:4px 8px; 
                                cursor:pointer;
-                               color:white;
-                               margin-bottom: 5px;"
+                               color:${isOverridden ? '#fff' : 'var(--text-dim)'};
+                               transition: all 0.2s ease;"
                         onclick="event.stopPropagation();
                                  if(confirm('Deseja forçar/alterar o classificado dessa partida?')){ 
                                      const w = prompt('Digite o nome EXATO do classificado (${jogo.timeA} ou ${jogo.timeB}) ou deixe em branco para resetar:'); 
                                      if(w && w.trim()) forcarVencedor16('${jogo.id}', w.trim());
                                      else if(w === '') forcarVencedor16('${jogo.id}', '');
                                  }">
-                        ⚙️ EDITAR${overrideText}
+                        ⚙️ EDITAR
                        </button>
             `;
         }
         
         return `
             <div class="mata-mata-jogo ${jogo.resultado ? 'realizado' : ''}" 
-                 data-jogo-id="${jogo.id}"
-                 style="position: relative;">
-                ${editBtn ? `<div style="position: absolute; top: -12px; right: 5px; z-index: 10;">${editBtn}</div>` : ''}
+                 data-jogo-id="${jogo.id}">
+                ${editBtn ? `<div style="position: absolute; top: 8px; right: 10px; z-index: 10;">${editBtn}</div>` : ''}
                 <div class="jogo-time ${jogo.vencedor === jogo.timeA ? 'vencedor' : ''}">
                     <span class="jogo-flag">${getBandeira(jogo.timeA)}</span>
-                    <span class="jogo-nome">${jogo.timeA || '???'}</span>
+                    <span class="jogo-nome">${jogo.timeA}</span>
                 </div>
                 <div class="jogo-placar-container">
                     ${resultadoHTML || '<span class="jogo-placar">x</span>'}
                 </div>
                 <div class="jogo-time ${jogo.vencedor === jogo.timeB ? 'vencedor' : ''}">
-                    <span class="jogo-nome">${jogo.timeB || '???'}</span>
+                    <span class="jogo-nome">${jogo.timeB}</span>
                     <span class="jogo-flag">${getBandeira(jogo.timeB)}</span>
                 </div>
-                ${renderInfoJogo(jogo)}
+                ${jogo.local ? `<div class="jogo-info">📍 ${jogo.local} | 🕐 ${jogo.horario} | 📅 ${jogo.data}</div>` : ''}
             </div>
         `;
     }).join('');
 }
 
-// ============================================
-// ALTERAÇÃO B: renderJogoFinal com parâmetro isTerceiro
-// ============================================
 function renderJogoFinal(jogo, isTerceiro = false) {
     if (!jogo) return '<div class="empty">Aguardando...</div>';
     
-    const hasRealTeams = jogo.timeA && jogo.timeB &&
-                         !jogo.timeA.includes('🏁') && !jogo.timeB.includes('🏁') &&
-                         !jogo.timeA.includes('🏆') && !jogo.timeB.includes('🏆') &&
-                         !jogo.timeA.includes('🥉') && !jogo.timeB.includes('🥉');
-    
+    const hasRealTeams = jogo.timeA && jogo.timeB;
     const resultadoHTML = formatarResultadoPremium(jogo);
     const isIncomplete = jogo.incompleto || !hasRealTeams;
     const jogoClass = isTerceiro ? 'mata-mata-jogo final-jogo terceiro-jogo' : 'mata-mata-jogo final-jogo';
-
+    
     return `
     <div class="${jogoClass} ${jogo.resultado ? 'realizado' : ''} ${isIncomplete ? 'incomplete' : ''}"
          data-jogo-id="${jogo.id}"
@@ -643,7 +640,7 @@ function renderJogoFinal(jogo, isTerceiro = false) {
             <span class="jogo-nome final-nome">${jogo.timeB || '???'}</span>
             <span class="jogo-flag">${isIncomplete ? '🏆' : getBandeira(jogo.timeB)}</span>
         </div>
-        ${renderInfoJogo(jogo)}
+        ${jogo.local ? `<div class="jogo-info">📍 ${jogo.local} | 🕐 ${jogo.horario} | 📅 ${jogo.data}</div>` : ''}
     </div>
     `;
 }
@@ -657,15 +654,11 @@ function encontrarJogoPorId(chave, id) {
         chave.final,
         chave.terceiroLugar
     ].filter(Boolean);
-    
     return todasFases.find(j => j.id === id);
 }
 
 function abrirModalMataMata(jogo) {
     if (!jogo.timeA || !jogo.timeB || jogo.incompleto) return;
-    if (jogo.timeA.includes('🏁') || jogo.timeB.includes('🏁')) return;
-    if (jogo.timeA.includes('🏆') || jogo.timeB.includes('🏆')) return;
-    if (jogo.timeA.includes('🥉') || jogo.timeB.includes('🥉')) return;
     
     const match = {
         id: jogo.id,

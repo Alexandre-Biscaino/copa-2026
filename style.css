@@ -1153,3 +1153,124 @@ img, span, div {
 .notification-card.success {
     animation: notificationPulse 0.5s ease;
 }
+
+/* ============================================ */
+/* CORREÇÃO: MODAL COM SCROLL E BOTÕES VISÍVEIS */
+/* ============================================ */
+
+.modal {
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 28px 24px 20px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--gold) transparent;
+}
+
+.modal::-webkit-scrollbar {
+    width: 4px;
+}
+
+.modal::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.modal::-webkit-scrollbar-thumb {
+    background: var(--gold);
+    border-radius: 4px;
+}
+
+.modal::-webkit-scrollbar-thumb:hover {
+    background: var(--green);
+}
+
+/* Garantir que os botões fiquem sempre visíveis no final do modal */
+.modal-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    position: sticky;
+    bottom: -4px;
+    background: var(--card);
+    padding-bottom: 4px;
+    z-index: 10;
+}
+
+/* Ajuste para mobile */
+@media (max-width: 600px) {
+    .modal {
+        max-height: 92vh;
+        padding: 20px 16px 16px;
+        border-radius: 20px;
+    }
+    
+    .modal-buttons {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding-top: 12px;
+        margin-top: 16px;
+    }
+    
+    .modal-buttons button {
+        flex: 1;
+        min-width: 80px;
+        padding: 10px 12px;
+        font-size: 12px;
+    }
+}
+
+/* ============================================ */
+/* MELHORIAS VISUAIS PARA O MATA-MATA           */
+/* ============================================ */
+
+/* Mensagem de "Aguardando" mais elegante */
+.empty-message {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--text-dim);
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    background: var(--card);
+    border-radius: 16px;
+    border: 1px dashed var(--line);
+    letter-spacing: 0.5px;
+}
+
+.empty-message::before {
+    content: '⏳ ';
+}
+
+/* Override button mais elegante */
+.btn-override {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px !important;
+    letter-spacing: 0.3px;
+}
+
+.btn-override:hover {
+    transform: scale(1.05);
+    border-color: var(--gold) !important;
+    color: var(--gold) !important;
+}
+
+/* Ajuste para o modal de confirmação de limpeza */
+.notification-btn-confirm.danger {
+    background: var(--coral) !important;
+    color: white !important;
+}
+
+.notification-btn-confirm.danger:hover {
+    filter: brightness(1.1);
+}
+
+/* Ajuste para jogos incompletos no mata-mata */
+.mata-mata-jogo.incomplete {
+    cursor: default !important;
+}
+
+.mata-mata-jogo.incomplete:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    border-color: var(--line) !important;
+}

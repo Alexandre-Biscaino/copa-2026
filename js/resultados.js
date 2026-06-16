@@ -76,14 +76,12 @@ export function openModal(match, onSaveCallback = null) {
         penAInput.value = existing.penA || 0;
         penBInput.value = existing.penB || 0;
         
-        // Carregar artilheiros existentes
         if (existing.artilheiros) {
             artilheirosInput.value = existing.artilheiros;
         } else {
             artilheirosInput.value = '';
         }
         
-        // Carregar gols contra existentes
         if (existing.golsContra) {
             golsContraInput.value = existing.golsContra;
         } else {
@@ -126,7 +124,6 @@ function togglePenaltiesFields() {
 function saveResult() {
     if (!currentMatch) return;
     
-    // Coletar dados dos campos
     const goalsA = parseInt(goalsAInput.value) || 0;
     const goalsB = parseInt(goalsBInput.value) || 0;
     const hasExtraTime = hasExtraTimeCheck.checked;
@@ -140,20 +137,33 @@ function saveResult() {
     
     // Validação básica
     if (goalsA === 0 && goalsB === 0 && !hasExtraTime && !hasPenalties) {
-        // Permitir 0x0, mas verificar se é intencional
-        const confirmZero = confirm('⚠️ Você está registrando um placar 0x0. Deseja continuar?');
-        if (!confirmZero) return;
+        showConfirmNotification(
+            '⚠️ Você está registrando um placar 0x0. Deseja continuar?',
+            'SIM, CONTINUAR',
+            'CANCELAR',
+            () => {
+                salvarDados(goalsA, goalsB, hasExtraTime, hasPenalties, etGoalsA, etGoalsB, penA, penB, artilheiros, golsContra);
+            }
+        );
+        return;
     }
     
-    // Se houve prorrogação, mas não houve gols, verificar se é intencional
-    if (hasExtraTime && etGoalsA === 0 && etGoalsB === 0 && hasPenalties) {
-        // Prorrogação 0x0 com pênaltis é válida
-    } else if (hasExtraTime && etGoalsA === 0 && etGoalsB === 0 && !hasPenalties) {
-        // Prorrogação 0x0 sem pênaltis - verificar se é intencional
-        const confirmET = confirm('⚠️ Prorrogação terminou 0x0. Deseja continuar?');
-        if (!confirmET) return;
+    if (hasExtraTime && etGoalsA === 0 && etGoalsB === 0 && !hasPenalties) {
+        showConfirmNotification(
+            '⚠️ Prorrogação terminou 0x0. Deseja continuar?',
+            'SIM, CONTINUAR',
+            'CANCELAR',
+            () => {
+                salvarDados(goalsA, goalsB, hasExtraTime, hasPenalties, etGoalsA, etGoalsB, penA, penB, artilheiros, golsContra);
+            }
+        );
+        return;
     }
     
+    salvarDados(goalsA, goalsB, hasExtraTime, hasPenalties, etGoalsA, etGoalsB, penA, penB, artilheiros, golsContra);
+}
+
+function salvarDados(goalsA, goalsB, hasExtraTime, hasPenalties, etGoalsA, etGoalsB, penA, penB, artilheiros, golsContra) {
     const resultData = {
         goalsA,
         goalsB,
@@ -174,39 +184,43 @@ function saveResult() {
     if (typeof renderTicker === 'function') renderTicker();
     if (typeof renderClassificacao === 'function') renderClassificacao();
     
-    // Disparar evento de atualização para estatísticas
     if (typeof window.renderEstatisticas === 'function') {
         window.renderEstatisticas();
     }
     
     if (modalCallback) modalCallback(currentMatch, resultData);
     
-    // Mostrar notificação de sucesso
     showNotification('✅ Resultado salvo com sucesso!', 'success');
 }
 
 function resetResult() {
     if (!currentMatch) return;
     
-    const confirmReset = confirm(`⚠️ Tem certeza que deseja limpar o resultado do jogo ${currentMatch.a} vs ${currentMatch.b}?`);
-    if (!confirmReset) return;
-    
-    clearMatchResult(currentMatch.id);
-    closeModal();
-    
-    if (typeof renderJogos === 'function') renderJogos();
-    if (typeof renderTicker === 'function') renderTicker();
-    if (typeof renderClassificacao === 'function') renderClassificacao();
-    
-    // Disparar evento de atualização para estatísticas
-    if (typeof window.renderEstatisticas === 'function') {
-        window.renderEstatisticas();
-    }
-    
-    showNotification('🗑️ Resultado removido com sucesso!', 'info');
+    showConfirmNotification(
+        `⚠️ Tem certeza que deseja limpar o resultado do jogo ${currentMatch.a} vs ${currentMatch.b}?`,
+        '🗑️ LIMPAR',
+        '❌ CANCELAR',
+        () => {
+            clearMatchResult(currentMatch.id);
+            closeModal();
+            
+            if (typeof renderJogos === 'function') renderJogos();
+            if (typeof renderTicker === 'function') renderTicker();
+            if (typeof renderClassificacao === 'function') renderClassificacao();
+            
+            if (typeof window.renderEstatisticas === 'function') {
+                window.renderEstatisticas();
+            }
+            
+            showNotification('🗑️ Resultado removido com sucesso!', 'info');
+        }
+    );
 }
 
-// Função auxiliar para mostrar notificações
+// ============================================
+// NOTIFICAÇÕES PREMIUM
+// ============================================
+
 function showNotification(message, type = 'success') {
     const notificationModal = document.getElementById('notificationModal');
     const notificationIcon = document.getElementById('notificationIcon');
@@ -216,48 +230,76 @@ function showNotification(message, type = 'success') {
     
     if (!notificationModal) return;
     
-    // Configurar ícone e título baseado no tipo
-    if (type === 'success') {
-        notificationIcon.textContent = '✅';
-        notificationTitle.textContent = 'Sucesso!';
-    } else if (type === 'error') {
-        notificationIcon.textContent = '❌';
-        notificationTitle.textContent = 'Erro!';
-    } else if (type === 'info') {
-        notificationIcon.textContent = 'ℹ️';
-        notificationTitle.textContent = 'Informação';
-    } else if (type === 'warning') {
-        notificationIcon.textContent = '⚠️';
-        notificationTitle.textContent = 'Atenção';
-    }
+    const types = {
+        success: { icon: '✅', title: 'Sucesso!' },
+        error: { icon: '❌', title: 'Erro!' },
+        info: { icon: 'ℹ️', title: 'Informação' },
+        warning: { icon: '⚠️', title: 'Atenção' }
+    };
     
+    const config = types[type] || types.success;
+    notificationIcon.textContent = config.icon;
+    notificationTitle.textContent = config.title;
     notificationMessage.textContent = message;
     
-    // Mostrar modal
     notificationModal.classList.add('active');
     
-    // Fechar ao clicar no botão
     notificationConfirmBtn.onclick = () => {
         notificationModal.classList.remove('active');
     };
     
-    // Fechar ao clicar fora
     notificationModal.onclick = (e) => {
         if (e.target === notificationModal) {
             notificationModal.classList.remove('active');
         }
     };
     
-    // Auto-fechar após 5 segundos
     setTimeout(() => {
         notificationModal.classList.remove('active');
     }, 5000);
 }
 
+function showConfirmNotification(message, confirmText, cancelText, onConfirm) {
+    const notificationModal = document.getElementById('notificationModal');
+    const notificationIcon = document.getElementById('notificationIcon');
+    const notificationTitle = document.getElementById('notificationTitle');
+    const notificationMessage = document.getElementById('notificationMessage');
+    const notificationButtons = document.getElementById('notificationButtons');
+    
+    if (!notificationModal) return;
+    
+    notificationIcon.textContent = '⚠️';
+    notificationTitle.textContent = 'Confirmação';
+    notificationMessage.textContent = message;
+    
+    notificationButtons.innerHTML = '';
+    
+    const confirmBtn = document.createElement('button');
+    confirmBtn.textContent = confirmText || 'SIM';
+    confirmBtn.className = 'notification-btn notification-btn-confirm';
+    confirmBtn.style.background = 'var(--coral)';
+    confirmBtn.style.color = 'white';
+    confirmBtn.onclick = () => {
+        notificationModal.classList.remove('active');
+        if (onConfirm) onConfirm();
+    };
+    notificationButtons.appendChild(confirmBtn);
+    
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = cancelText || 'NÃO';
+    cancelBtn.className = 'notification-btn notification-btn-cancel';
+    cancelBtn.onclick = () => {
+        notificationModal.classList.remove('active');
+    };
+    notificationButtons.appendChild(cancelBtn);
+    
+    notificationModal.classList.add('active');
+}
+
 // ============================================
-// FUNÇÃO PREMIUM - EXIBE RESULTADO EM CARDS SEPARADOS
-// (SEM ARTILHEIROS - APENAS PLACAR E PRORROGAÇÃO/PÊNALTIS)
+// FUNÇÕES DE EXIBIÇÃO DE RESULTADO
 // ============================================
+
 export function getMatchResultText(match) {
     const res = results[match.id];
     if (!res) return null;
@@ -268,19 +310,16 @@ export function getMatchResultText(match) {
     const golsProrrogacao = `${res.etGoalsA || 0} - ${res.etGoalsB || 0}`;
     const golsPenaltis = `${res.penA || 0} - ${res.penB || 0}`;
     
-    // Determinar ícone do vencedor dos pênaltis
     let iconPenaltis = '';
     if (temPenaltis && res.penA !== undefined && res.penB !== undefined) {
         const vencedor = res.penA > res.penB ? 'A' : (res.penB > res.penA ? 'B' : null);
         iconPenaltis = vencedor ? '🏆' : '❌';
     }
     
-    // Montar HTML com cards separados (SEM ARTILHEIROS)
     let html = `<div class="result-premium-container">`;
     html += `<div class="result-teams">${getBandeira(match.fa)} ${match.a} vs ${match.b} ${getBandeira(match.fb)}</div>`;
     html += `<div class="result-cards">`;
     
-    // Card 1: Tempo Normal
     html += `
         <div class="result-card result-card-normal">
             <div class="result-card-title">📋 TEMPO NORMAL</div>
@@ -288,7 +327,6 @@ export function getMatchResultText(match) {
         </div>
     `;
     
-    // Card 2: Prorrogação (se houver)
     if (temProrrogacao) {
         html += `
             <div class="result-card result-card-et">
@@ -298,7 +336,6 @@ export function getMatchResultText(match) {
         `;
     }
     
-    // Card 3: Pênaltis (se houver)
     if (temPenaltis) {
         html += `
             <div class="result-card result-card-penalties">
@@ -308,21 +345,15 @@ export function getMatchResultText(match) {
         `;
     }
     
-    // Card 4: Artilheiros NÃO é mais exibido aqui
-    // Os artilheiros ficam apenas no modal de edição
-    
     html += `</div></div>`;
-    
     return html;
 }
 
-// Versão texto puro para tooltip (sem HTML)
 export function getMatchResultTextSimple(match) {
     const res = results[match.id];
     if (!res) return null;
     
-    const normal = `${res.goalsA} - ${res.goalsB}`;
-    let text = normal;
+    let text = `${res.goalsA} - ${res.goalsB}`;
     
     if (res.hasExtraTime) {
         if (res.hasPenalties) {
@@ -357,7 +388,6 @@ export function getMatchWinner(match) {
     return null;
 }
 
-// Função para obter artilheiros de um jogo específico
 export function getMatchArtilheiros(matchId) {
     const res = results[matchId];
     if (res && res.artilheiros) {
@@ -366,7 +396,6 @@ export function getMatchArtilheiros(matchId) {
     return null;
 }
 
-// Função para obter gols contra de um jogo específico
 export function getMatchGolsContra(matchId) {
     const res = results[matchId];
     if (res && res.golsContra) {
@@ -375,18 +404,15 @@ export function getMatchGolsContra(matchId) {
     return null;
 }
 
-// Função para processar artilheiros e extrair lista estruturada
 export function parseArtilheiros(artilheirosString) {
     if (!artilheirosString || artilheirosString.trim() === '') {
         return [];
     }
     
-    // Formato esperado: "Neymar (2), Vinicius Jr (1), Richarlison (1)"
     const items = artilheirosString.split(',').map(item => item.trim());
     const result = [];
     
     items.forEach(item => {
-        // Tenta extrair nome e gols no formato "Nome (N)"
         const match = item.match(/^(.+?)\s*\((\d+)\)$/);
         if (match) {
             result.push({
@@ -394,7 +420,6 @@ export function parseArtilheiros(artilheirosString) {
                 gols: parseInt(match[2]) || 0
             });
         } else {
-            // Se não encontrar o formato, assume que é apenas o nome com 1 gol
             result.push({
                 jogador: item.trim(),
                 gols: 1
@@ -405,18 +430,15 @@ export function parseArtilheiros(artilheirosString) {
     return result;
 }
 
-// Função para processar gols contra e extrair lista estruturada
 export function parseGolsContra(golsContraString) {
     if (!golsContraString || golsContraString.trim() === '') {
         return [];
     }
     
-    // Formato esperado: "Thiago Silva (1), Marquinhos (1)"
     const items = golsContraString.split(',').map(item => item.trim());
     const result = [];
     
     items.forEach(item => {
-        // Tenta extrair nome e gols no formato "Nome (N)"
         const match = item.match(/^(.+?)\s*\((\d+)\)$/);
         if (match) {
             result.push({
@@ -424,7 +446,6 @@ export function parseGolsContra(golsContraString) {
                 gols: parseInt(match[2]) || 0
             });
         } else {
-            // Se não encontrar o formato, assume que é apenas o nome com 1 gol
             result.push({
                 jogador: item.trim(),
                 gols: 1
