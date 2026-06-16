@@ -153,3 +153,117 @@ export function getResultText(match) {
 export function hasResult(matchId) {
     return !!results[matchId];
 }
+
+// ============================================
+// FUNÇÕES PARA ARTILHEIROS
+// ============================================
+
+// Salvar artilheiros de um jogo
+export function saveArtilheiros(matchId, artilheirosData) {
+    if (!results[matchId]) {
+        results[matchId] = {};
+    }
+    results[matchId].artilheiros = artilheirosData;
+    saveResults();
+}
+
+// Obter artilheiros de um jogo
+export function getArtilheiros(matchId) {
+    const result = results[matchId];
+    if (result && result.artilheiros) {
+        return result.artilheiros;
+    }
+    return null;
+}
+
+// Adicionar artilheiro a um jogo específico
+export function addArtilheiro(matchId, jogador, gols) {
+    const artilheiros = getArtilheiros(matchId) || [];
+    const existing = artilheiros.find(a => a.jogador === jogador);
+    
+    if (existing) {
+        existing.gols += gols;
+    } else {
+        artilheiros.push({ jogador, gols });
+    }
+    
+    // Ordenar por gols (do maior para o menor)
+    artilheiros.sort((a, b) => b.gols - a.gols);
+    
+    saveArtilheiros(matchId, artilheiros);
+    return artilheiros;
+}
+
+// Remover um artilheiro de um jogo
+export function removeArtilheiro(matchId, jogador) {
+    const artilheiros = getArtilheiros(matchId) || [];
+    const index = artilheiros.findIndex(a => a.jogador === jogador);
+    
+    if (index !== -1) {
+        artilheiros.splice(index, 1);
+        saveArtilheiros(matchId, artilheiros);
+        return true;
+    }
+    return false;
+}
+
+// Limpar todos os artilheiros de um jogo
+export function clearArtilheiros(matchId) {
+    if (results[matchId]) {
+        delete results[matchId].artilheiros;
+        saveResults();
+        return true;
+    }
+    return false;
+}
+
+// Buscar artilheiros por seleção em todos os jogos
+export function getArtilheirosByTeam(teamName) {
+    const allArtilheiros = {};
+    
+    for (const [matchId, result] of Object.entries(results)) {
+        if (result.artilheiros && Array.isArray(result.artilheiros)) {
+            result.artilheiros.forEach(item => {
+                // Se o artilheiro estiver vinculado a uma seleção (formato: "Jogador (Seleção)")
+                // ou apenas o nome do jogador
+                if (!allArtilheiros[item.jogador]) {
+                    allArtilheiros[item.jogador] = {
+                        jogador: item.jogador,
+                        gols: 0,
+                        selecao: item.selecao || null
+                    };
+                }
+                allArtilheiros[item.jogador].gols += item.gols;
+            });
+        }
+    }
+    
+    // Converter para array e ordenar por gols
+    return Object.values(allArtilheiros)
+        .sort((a, b) => b.gols - a.gols);
+}
+
+// Obter todos os artilheiros de todos os jogos
+export function getAllArtilheiros() {
+    const allArtilheiros = {};
+    
+    for (const [matchId, result] of Object.entries(results)) {
+        if (result.artilheiros && Array.isArray(result.artilheiros)) {
+            result.artilheiros.forEach(item => {
+                const key = item.jogador;
+                if (!allArtilheiros[key]) {
+                    allArtilheiros[key] = {
+                        jogador: item.jogador,
+                        gols: 0,
+                        selecao: item.selecao || null
+                    };
+                }
+                allArtilheiros[key].gols += item.gols;
+            });
+        }
+    }
+    
+    // Converter para array e ordenar por gols
+    return Object.values(allArtilheiros)
+        .sort((a, b) => b.gols - a.gols);
+}

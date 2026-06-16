@@ -136,32 +136,69 @@
             </div>
         </div>
         
-        <!-- Gráficos -->
+        <!-- GRÁFICOS: ATAQUE E DEFESA -->
         <div class="charts-grid">
             <div class="chart-card">
-                <h3 class="chart-title">🎯 MAIORES ARTILHEIROS</h3>
-                <canvas id="artilheirosChart" width="400" height="300"></canvas>
+                <h3 class="chart-title">⚽ ATAQUE (Gols Feitos) - TOP 10</h3>
+                <canvas id="ataqueChart" width="400" height="300"></canvas>
             </div>
-            
             <div class="chart-card">
-                <h3 class="chart-title">📊 GOLS POR TIME (TOP 10)</h3>
-                <canvas id="golsTimeChart" width="400" height="300"></canvas>
+                <h3 class="chart-title">🛡️ DEFESA (Gols Sofridos) - TOP 10</h3>
+                <canvas id="defesaChart" width="400" height="300"></canvas>
             </div>
-            
+        </div>
+        
+        <!-- GRÁFICOS: PLACAR MAIS COMUM E RESULTADOS -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3 class="chart-title">📊 PLACAR MAIS COMUM</h3>
+                <canvas id="placarChart" width="400" height="300"></canvas>
+            </div>
             <div class="chart-card">
                 <h3 class="chart-title">🔄 RESULTADOS DO TORNEIO</h3>
                 <canvas id="resultadosChart" width="400" height="300"></canvas>
             </div>
-            
-            <div class="chart-card">
-                <h3 class="chart-title">⚽ MÉDIA DE GOLS POR GRUPO</h3>
-                <canvas id="golsGrupoChart" width="400" height="300"></canvas>
+        </div>
+        
+        <!-- GRÁFICO: EVOLUÇÃO DO CAMPEÃO -->
+        <div class="charts-grid">
+            <div class="chart-card" style="grid-column: 1 / -1;">
+                <h3 class="chart-title">📈 EVOLUÇÃO DO CAMPEÃO (Pontos por Jogo)</h3>
+                <canvas id="evolucaoChart" width="800" height="300"></canvas>
             </div>
         </div>
         
-        <!-- Tabela de artilheiros detalhada -->
+        <!-- GRÁFICO: ARTILHEIROS INDIVIDUAIS -->
+        <div class="charts-grid">
+            <div class="chart-card" style="grid-column: 1 / -1;">
+                <h3 class="chart-title">⚽ ARTILHEIROS DA COPA (Jogadores)</h3>
+                <canvas id="artilheirosIndividuaisChart" width="800" height="300"></canvas>
+            </div>
+        </div>
+        
+        <!-- Tabela de artilheiros individuais -->
         <div class="artilheiros-table-container">
-            <h3 class="chart-title">🏅 RANKING DE ARTILHEIROS</h3>
+            <h3 class="chart-title">🏅 RANKING DE ARTILHEIROS (Jogadores)</h3>
+            <table class="artilheiros-table" id="artilheirosIndividuaisTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Jogador</th>
+                        <th>Seleção</th>
+                        <th>Gols</th>
+                        <th>Jogos</th>
+                        <th>Média</th>
+                    </tr>
+                </thead>
+                <tbody id="artilheirosIndividuaisBody">
+                    <tr><td colspan="6">Carregando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Tabela de artilheiros por seleção -->
+        <div class="artilheiros-table-container">
+            <h3 class="chart-title">🏅 RANKING DE ARTILHEIROS (Seleções)</h3>
             <table class="artilheiros-table" id="artilheirosTable">
                 <thead>
                     <tr>
@@ -173,6 +210,28 @@
                     </tr>
                 </thead>
                 <tbody id="artilheirosTableBody">
+                    <tr><td colspan="5">Carregando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Tabela de gols contra com seleção -->
+        <div class="artilheiros-table-container" style="margin-top: 20px; border: 1px solid var(--coral, #ff6b5e);">
+            <h3 class="chart-title" style="color: var(--coral, #ff6b5e);">⚠️ GOLS CONTRA</h3>
+            <div style="font-size: 12px; color: var(--text-dim); text-align: center; margin-bottom: 16px;">
+                Gols contra não são contabilizados no ranking de artilheiros
+            </div>
+            <table class="artilheiros-table" id="golsContraTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Jogador</th>
+                        <th>Seleção</th>
+                        <th>Gols Contra</th>
+                        <th>Jogos</th>
+                    </tr>
+                </thead>
+                <tbody id="golsContraBody">
                     <tr><td colspan="5">Carregando...</td></tr>
                 </tbody>
             </table>
@@ -210,6 +269,25 @@
         <input type="number" id="goalsA" min="0" max="20" value="0" placeholder="0">
         <span style="font-size:24px;align-self:center;">x</span>
         <input type="number" id="goalsB" min="0" max="20" value="0" placeholder="0">
+      </div>
+    </div>
+
+    <!-- CAMPO: ARTILHEIROS (OPCIONAL) -->
+    <div class="input-group" style="margin-top: 12px;">
+      <label>⚽ ARTILHEIROS (opcional - ex: Neymar (2), Vinicius Jr (1))</label>
+      <input type="text" id="artilheirosInput" placeholder="Ex: Neymar (2), Vinicius Jr (1), Richarlison (1)" 
+             style="width: 100%; padding: 10px; background: var(--bg); border: 1px solid var(--line); 
+                    border-radius: 12px; color: var(--text); font-size: 14px; outline: none;">
+    </div>
+
+    <!-- CAMPO: GOLS CONTRA (OPCIONAL) -->
+    <div class="input-group" style="margin-top: 8px;">
+      <label>⚠️ GOLS CONTRA (opcional - não contam para artilheiros)</label>
+      <input type="text" id="golsContraInput" placeholder="Ex: Thiago Silva (1), Marquinhos (1)" 
+             style="width: 100%; padding: 10px; background: var(--bg); border: 1px solid var(--line); 
+                    border-radius: 12px; color: var(--text); font-size: 14px; outline: none;">
+      <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">
+        💡 Gols contra não são contabilizados no ranking de artilheiros
       </div>
     </div>
 
