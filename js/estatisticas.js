@@ -6,6 +6,7 @@
 import { results, getWinner } from './storage.js';
 import { matches } from './dados.js';
 import { getClassificacao } from './classificacao.js';
+import { initChaveamento } from './mataMata.js';
 
 let charts = {};
 
@@ -287,30 +288,12 @@ export function calcularEstatisticas() {
     // IDENTIFICAR O CAMPEÃO
     // ============================================
     
-    // Verificar se a final foi disputada (último jogo da lista)
-    const ultimoJogo = matches[matches.length - 1];
-    const finalDisputada = ultimoJogo && results[ultimoJogo.id];
+    // Obter todo o chaveamento do mata-mata atualizado
+    const chave = initChaveamento();
     
-    if (finalDisputada) {
-        // A final é o último jogo - o vencedor é o campeão
-        const resFinal = results[ultimoJogo.id];
-        const winnerFinal = getWinner(ultimoJogo, resFinal);
-        
-        if (winnerFinal === 'A') {
-            nomeCampeao = ultimoJogo.a;
-        } else if (winnerFinal === 'B') {
-            nomeCampeao = ultimoJogo.b;
-        }
-        
-        // Se a final terminou empatada, verificar pênaltis
-        if (!nomeCampeao && resFinal.hasPenalties) {
-            if (resFinal.penA > resFinal.penB) {
-                nomeCampeao = ultimoJogo.a;
-            } else if (resFinal.penB > resFinal.penA) {
-                nomeCampeao = ultimoJogo.b;
-            }
-        }
-        
+    // Verificar se a Grande Final existe e se tem resultado
+    if (chave.final && chave.final.resultado && chave.final.vencedor) {
+        nomeCampeao = chave.final.vencedor;
         isCopaFinalizada = true;
     }
     
@@ -318,48 +301,61 @@ export function calcularEstatisticas() {
     // EVOLUÇÃO DO CAMPEÃO
     // ============================================
     
-    if (nomeCampeao) {
-        // Ordenar os jogos do campeão por data
-        const jogosCampeao = matches.filter(m => m.a === nomeCampeao || m.b === nomeCampeao);
-        jogosCampeao.sort((a, b) => matchDateTime(a) - matchDateTime(b));
+    if (isCopaFinalizada && nomeCampeao) {
+        // 1. Obter jogos da fase de grupos (ordenados por data)
+        let jogosGrupos = matches
+            .filter(m => m.a === nomeCampeao || m.b === nomeCampeao)
+            .sort((a, b) => matchDateTime(a) - matchDateTime(b))
+            .map(m => ({ ...m, faseTorneio: 'Grupos' }));
+            
+        // 2. Obter jogos do mata-mata (na ordem cronológica das fases)
+        let jogosMataMata = [];
+        const fasesMataMata = [
+            { arr: chave.dezesseisAvos, nome: '16 avos' },
+            { arr: chave.oitavas, nome: 'Oitavas' },
+            { arr: chave.quartas, nome: 'Quartas' },
+            { arr: chave.semi, nome: 'Semifinal' },
+            { arr: [chave.final], nome: 'Final' }
+        ];
         
+        fasesMataMata.forEach(fase => {
+            const jogoFase = fase.arr.find(j => j && !j.incompleto && (j.timeA === nomeCampeao || j.timeB === nomeCampeao));
+            if (jogoFase && jogoFase.resultado) {
+                jogosMataMata.push({
+                    id: jogoFase.id,
+                    a: jogoFase.timeA,
+                    b: jogoFase.timeB,
+                    faseTorneio: fase.nome
+                });
+            }
+        });
+        
+        // Juntar todos os 8 jogos do campeão (3 grupos + 5 mata-mata)
+        const jogosCampeao = [...jogosGrupos, ...jogosMataMata];
         let pontosAcumulados = 0;
         
         jogosCampeao.forEach((match, index) => {
             const res = results[match.id];
             if (!res) return;
             
-            const winner = getWinner(match, res);
-            const timeA = match.a;
+            const winner = getWinner({id: match.id, a: match.a, b: match.b}, res);
             
-            // Calcular pontos do jogo
+            // Calcular pontos do jogo para a evolução
             let pontosJogo = 0;
-            if (winner === 'A' && timeA === nomeCampeao) pontosJogo = 3;
+            if (winner === 'A' && match.a === nomeCampeao) pontosJogo = 3;
             else if (winner === 'B' && match.b === nomeCampeao) pontosJogo = 3;
-            else if (!winner) pontosJogo = 1;
+            else if (!winner) pontosJogo = 1; // Empate
             
             pontosAcumulados += pontosJogo;
-            
-            // Determinar a fase do jogo
-            let fase = '';
-            const totalJogosCampeao = jogosCampeao.length;
-            
-            if (totalJogosCampeao <= 3) {
-                fase = 'Grupos';
-            } else {
-                const faseIndex = index - 3; // Remove os 3 jogos da fase de grupos
-                const fases = ['16 avos', 'Oitavas', 'Quartas', 'Semifinal', 'Final'];
-                fase = fases[faseIndex] || fases[fases.length - 1];
-            }
             
             faseCampeao.push({
                 jogo: index + 1,
                 pontos: pontosAcumulados,
-                fase: fase,
+                fase: match.faseTorneio,
                 adversario: match.a === nomeCampeao ? match.b : match.a,
                 golsFeitos: match.a === nomeCampeao ? res.goalsA : res.goalsB,
                 golsSofridos: match.a === nomeCampeao ? res.goalsB : res.goalsA,
-                venceu: pontosJogo === 3
+                venceu: winner === 'A' ? match.a === nomeCampeao : (winner === 'B' ? match.b === nomeCampeao : false)
             });
         });
         

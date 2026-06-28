@@ -7,21 +7,115 @@ import { results, getWinner } from './storage.js';
 import { getClassificacao, getMelhoresTerceiros } from './classificacao.js';
 import { getBandeira } from './bandeiras.js';
 
-// --- SISTEMA DE OVERRIDE MANUAL PARA 16-AVOS ---
-const overrides16Avos = JSON.parse(localStorage.getItem('overrides16Avos') || '{}');
+// --- SISTEMA DE OVERRIDE MANUAL DE EQUIPES ---
+const overrideEquipes = JSON.parse(localStorage.getItem('overrideEquipes') || '{}');
 
-window.forcarVencedor16 = function(jogoId, timeVencedor) {
-    if(timeVencedor && timeVencedor.trim()) {
-        overrides16Avos[jogoId] = timeVencedor.trim();
+window.alterarEquipes = function(jogoId, novoA, novoB) {
+    // Se os dois campos estiverem vazios, removemos a customização
+    if (!novoA && !novoB) {
+        delete overrideEquipes[jogoId];
     } else {
-        delete overrides16Avos[jogoId];
+        overrideEquipes[jogoId] = { a: novoA, b: novoB };
     }
-    localStorage.setItem('overrides16Avos', JSON.stringify(overrides16Avos));
+    localStorage.setItem('overrideEquipes', JSON.stringify(overrideEquipes));
     renderMataMata();
     
-    // Notificação premium
-    showNotification(`✅ Classificado alterado com sucesso! O time ${timeVencedor} avançará para as oitavas.`, 'success');
+    showNotification(`✅ Confronto atualizado com sucesso!`, 'success');
 };
+
+// =========================================================================
+// NOVO: MODAL PREMIUM PARA ALTERAR AS SELEÇÕES DA PARTIDA
+// =========================================================================
+window.abrirModalOverride = function(jogoId, timeA, timeB) {
+    const modalId = 'overrideModalPremium';
+    let modal = document.getElementById(modalId);
+    
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = modalId;
+        modal.className = 'notification-modal active';
+        document.body.appendChild(modal);
+    } else {
+        modal.classList.add('active');
+    }
+
+    // Pega os nomes atuais (ou os que já foram customizados)
+    const salvo = overrideEquipes[jogoId] || {};
+    const tA = salvo.a !== undefined ? salvo.a : (timeA !== 'null' ? timeA : '');
+    const tB = salvo.b !== undefined ? salvo.b : (timeB !== 'null' ? timeB : '');
+
+    modal.innerHTML = `
+        <div class="notification-card" style="max-width: 450px; text-align: center;">
+            <div class="notification-icon">⚙️</div>
+            <h3 class="notification-title">Alterar Seleções</h3>
+            <p class="notification-message">Corrija ou altere os times que jogarão este confronto.</p>
+            
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 24px; background: var(--bg-deep); padding: 16px; border-radius: 12px; border: 1px solid var(--line);">
+                <div style="flex: 1; text-align: left;">
+                    <label style="font-size: 11px; color: var(--text-dim); margin-bottom: 6px; display: block; font-family: 'Space Mono', monospace;">TIME 1</label>
+                    <input type="text" id="overrideTimeA" value="${tA}" placeholder="Ex: Brasil" style="width: 100%; padding: 10px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; color: var(--text); outline: none;">
+                </div>
+                <div style="font-family: 'Anton', sans-serif; color: var(--text-dim); margin-top: 18px;">X</div>
+                <div style="flex: 1; text-align: left;">
+                    <label style="font-size: 11px; color: var(--text-dim); margin-bottom: 6px; display: block; font-family: 'Space Mono', monospace;">TIME 2</label>
+                    <input type="text" id="overrideTimeB" value="${tB}" placeholder="Ex: Holanda" style="width: 100%; padding: 10px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; color: var(--text); outline: none;">
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 12px; justify-content: center; border-top: 1px solid var(--line); padding-top: 20px;">
+                <button class="notification-btn" style="background: var(--green); color: #06241a;" onclick="const a = document.getElementById('overrideTimeA').value; const b = document.getElementById('overrideTimeB').value; alterarEquipes('${jogoId}', a, b); fecharOverrideModal();">💾 Salvar</button>
+                <button class="notification-btn notification-btn-cancel" onclick="alterarEquipes('${jogoId}', '', ''); fecharOverrideModal();" style="border-color: var(--coral); color: var(--coral);">🔄 Restaurar Padrão</button>
+                <button class="notification-btn notification-btn-cancel" onclick="fecharOverrideModal();">❌ Cancelar</button>
+            </div>
+        </div>
+    `;
+};
+
+window.fecharOverrideModal = function() {
+    const modal = document.getElementById('overrideModalPremium');
+    if (modal) modal.classList.remove('active');
+};
+
+// =========================================================================
+// VERSÃO CORRIGIDA DA ALOCAÇÃO DE POSIÇÕES
+// =========================================================================
+
+function getTimePorPosicao(posicao) {
+    const classificacao = getClassificacao();
+    const melhoresTerceiros = getMelhoresTerceiros();
+    
+    // Tratamento para 1º e 2º colocados dos grupos (A até L)
+    if (posicao.startsWith('1') || posicao.startsWith('2')) {
+        const grupo = posicao.charAt(1);
+        const pos = parseInt(posicao.charAt(0)) - 1;
+        const ranking = classificacao[grupo];
+        
+        // CORREÇÃO: Removeu-se a exigência estrita de 'jogos === 3' para evitar 
+        // travamentos por inconsistência de dados no localStorage no dia do início da fase.
+        if (ranking && ranking[pos]) {
+            return ranking[pos].time;
+        }
+        return null;
+    }
+    
+    // Tratamento dinâmico para os melhores 3º colocados
+    if (posicao.startsWith('3')) {
+        const gruposPossiveis = posicao.substring(1).split('');
+        
+        // CORREÇÃO: Agora verifica os terceiros colocados em ordem, 
+        // respeitando a matriz de combinação oficial da FIFA
+        for (let i = 0; i < melhoresTerceiros.length; i++) {
+            const terceiro = melhoresTerceiros[i];
+            if (gruposPossiveis.includes(terceiro.grupo)) {
+                if (!terceirosUsadosGlobal.includes(terceiro.time)) {
+                    terceirosUsadosGlobal.push(terceiro.time);
+                    return terceiro.time;
+                }
+            }
+        }
+    }
+    return null;
+}
 
 // Template dos confrontos de 16-avos
 const confrontos16AvosTemplate = [
@@ -37,7 +131,7 @@ const confrontos16AvosTemplate = [
     { id: '82', pos1: '1G', pos2: '3AEHIJ', local: 'SEATTLE', horario: '17H', data: '1 JUL' },
     { id: '83', pos1: '2K', pos2: '2L', local: 'TORONTO', horario: '20H', data: '2 JUL' },
     { id: '84', pos1: '1H', pos2: '2J', local: 'LOS ANGELES', horario: '16H', data: '2 JUL' },
-    { id: '85', pos1: '1B', pos2: '3EFGIJ', local: 'VANCOUVER', horario: '8H', data: '3 JUL' },
+    { id: '85', pos1: '1B', pos2: '3EFGIJ', local: 'VANCOUVER', horario: '00H', data: '3 JUL' },
     { id: '86', pos1: '1J', pos2: '2H', local: 'MIAMI', horario: '19H', data: '3 JUL' },
     { id: '87', pos1: '1K', pos2: '3DEIJL', local: 'KANSAS CITY', horario: '22H30', data: '3 JUL' },
     { id: '88', pos1: '2D', pos2: '2G', local: 'DALLAS', horario: '15H', data: '3 JUL' }
@@ -77,35 +171,6 @@ const terceiroTemplate = { id: '104', jogoOrigem1: '101', jogoOrigem2: '102', lo
 
 let terceirosUsadosGlobal = [];
 
-function getTimePorPosicao(posicao) {
-    const classificacao = getClassificacao();
-    const melhoresTerceiros = getMelhoresTerceiros();
-    
-    if (posicao.startsWith('1') || posicao.startsWith('2')) {
-        const grupo = posicao.charAt(1);
-        const pos = parseInt(posicao.charAt(0)) - 1;
-        const ranking = classificacao[grupo];
-        if (ranking && ranking[pos] && ranking[pos].jogos === 3) {
-            return ranking[pos].time;
-        }
-        return null;
-    }
-    
-    if (posicao.startsWith('3')) {
-        const gruposPossiveis = posicao.substring(1).split('');
-        for (let i = 0; i < melhoresTerceiros.length; i++) {
-            const terceiro = melhoresTerceiros[i];
-            if (gruposPossiveis.includes(terceiro.grupo)) {
-                if (!terceirosUsadosGlobal.includes(terceiro.time)) {
-                    terceirosUsadosGlobal.push(terceiro.time);
-                    return terceiro.time;
-                }
-            }
-        }
-    }
-    return null;
-}
-
 function getVencedorPorJogoId(jogoId, dezesseisAvosMap, oitavasMap, quartasMap, semiMap) {
     if (dezesseisAvosMap && dezesseisAvosMap[jogoId]) {
         return dezesseisAvosMap[jogoId].vencedor;
@@ -126,8 +191,15 @@ export function initChaveamento() {
     terceirosUsadosGlobal = [];
     
     const dezesseisAvos = confrontos16AvosTemplate.map(confronto => {
-        const timeA = getTimePorPosicao(confronto.pos1);
-        const timeB = getTimePorPosicao(confronto.pos2);
+        let timeA = getTimePorPosicao(confronto.pos1);
+        let timeB = getTimePorPosicao(confronto.pos2);
+        
+        // APLICA A CUSTOMIZAÇÃO DO USUÁRIO SE EXISTIR
+        if (overrideEquipes[confronto.id]) {
+            if (overrideEquipes[confronto.id].a) timeA = overrideEquipes[confronto.id].a;
+            if (overrideEquipes[confronto.id].b) timeB = overrideEquipes[confronto.id].b;
+        }
+
         const incompleto = (!timeA || !timeB);
         
         const jogo = {
@@ -142,14 +214,8 @@ export function initChaveamento() {
             incompleto: incompleto
         };
         
-        if (!incompleto && overrides16Avos[confronto.id]) {
-            const overrideWinner = overrides16Avos[confronto.id];
-            if (overrideWinner === jogo.timeA || overrideWinner === jogo.timeB) {
-                jogo.vencedor = overrideWinner;
-            }
-        }
-        
-        if (!jogo.vencedor && !incompleto && jogo.resultado) {
+        // O vencedor continua sendo calculado automaticamente pelo placar!
+        if (!incompleto && jogo.resultado) {
             const winner = getWinner({ id: jogo.id }, jogo.resultado);
             jogo.vencedor = winner === 'A' ? jogo.timeA : (winner === 'B' ? jogo.timeB : null);
         }
@@ -542,6 +608,10 @@ export function renderMataMata() {
     });
 }
 
+// ============================================
+// RENDER JOGOS LISTA - VERSÃO CORRIGIDA
+// ============================================
+
 function renderJogosLista(jogos, is16Avos = false) {
     if (!jogos || jogos.length === 0) {
         return '<div class="empty-message">⏳ Aguardando definição dos confrontos...</div>';
@@ -550,10 +620,29 @@ function renderJogosLista(jogos, is16Avos = false) {
     return jogos.map(jogo => {
         const hasRealTeams = jogo.timeA && jogo.timeB;
         
+        // --- BOTÃO DE EDITAR ---
+        let editBtn = '';
+        if (is16Avos) {
+            // Mudamos a verificação para usar a nova variável overrideEquipes
+            const isOverridden = overrideEquipes[jogo.id] ? true : false;
+            editBtn = `
+                <button class="btn-override" 
+                        style="position: absolute; top: 8px; right: 10px; z-index: 10;
+                               background:${isOverridden ? '#ff9800' : 'rgba(255,255,255,0.05)'}; 
+                               border:1px solid ${isOverridden ? '#ff9800' : 'var(--line)'}; 
+                               border-radius:6px; font-size:10px; padding:4px 8px; cursor:pointer;
+                               color:${isOverridden ? '#fff' : 'var(--text-dim)'}; transition: all 0.2s ease;"
+                        onclick="event.stopPropagation(); abrirModalOverride('${jogo.id}', '${jogo.timeA}', '${jogo.timeB}');">
+                        ⚙️ EDITAR
+                       </button>
+            `;
+        }
+
         // Jogos incompletos
         if (jogo.incompleto || !hasRealTeams) {
             return `
-            <div class="mata-mata-jogo incomplete" data-jogo-id="${jogo.id}">
+            <div class="mata-mata-jogo incomplete" data-jogo-id="${jogo.id}" style="position: relative;">
+                ${editBtn}
                 <div class="jogo-time">
                     <span class="jogo-flag">⏳</span>
                     <span class="jogo-nome" style="color: var(--text-dim);">Aguardando...</span>
@@ -572,34 +661,10 @@ function renderJogosLista(jogos, is16Avos = false) {
         
         const resultadoHTML = formatarResultadoPremium(jogo);
         
-        let editBtn = '';
-        if (is16Avos && jogo.resultado) {
-            const isOverridden = overrides16Avos[jogo.id] ? true : false;
-            editBtn = `
-                <button class="btn-override" 
-                        style="background:${isOverridden ? '#ff9800' : 'rgba(255,255,255,0.05)'}; 
-                               border:1px solid ${isOverridden ? '#ff9800' : 'var(--line)'}; 
-                               border-radius:6px; 
-                               font-size:10px; 
-                               padding:4px 8px; 
-                               cursor:pointer;
-                               color:${isOverridden ? '#fff' : 'var(--text-dim)'};
-                               transition: all 0.2s ease;"
-                        onclick="event.stopPropagation();
-                                 if(confirm('Deseja forçar/alterar o classificado dessa partida?')){ 
-                                     const w = prompt('Digite o nome EXATO do classificado (${jogo.timeA} ou ${jogo.timeB}) ou deixe em branco para resetar:'); 
-                                     if(w && w.trim()) forcarVencedor16('${jogo.id}', w.trim());
-                                     else if(w === '') forcarVencedor16('${jogo.id}', '');
-                                 }">
-                        ⚙️ EDITAR
-                       </button>
-            `;
-        }
-        
         return `
             <div class="mata-mata-jogo ${jogo.resultado ? 'realizado' : ''}" 
-                 data-jogo-id="${jogo.id}">
-                ${editBtn ? `<div style="position: absolute; top: 8px; right: 10px; z-index: 10;">${editBtn}</div>` : ''}
+                 data-jogo-id="${jogo.id}" style="position: relative;">
+                ${editBtn}
                 <div class="jogo-time ${jogo.vencedor === jogo.timeA ? 'vencedor' : ''}">
                     <span class="jogo-flag">${getBandeira(jogo.timeA)}</span>
                     <span class="jogo-nome">${jogo.timeA}</span>
@@ -664,8 +729,9 @@ function abrirModalMataMata(jogo) {
         id: jogo.id,
         a: jogo.timeA,
         b: jogo.timeB,
-        fa: getBandeira(jogo.timeA),
-        fb: getBandeira(jogo.timeB),
+        // CORREÇÃO: Passamos apenas o nome, o getBandeira fará o resto no resultados.js
+        fa: jogo.timeA, 
+        fb: jogo.timeB, 
         venue: jogo.local || 'Mata-Mata',
         time: jogo.horario || '00:00',
         date: jogo.data || new Date().toISOString().split('T')[0],

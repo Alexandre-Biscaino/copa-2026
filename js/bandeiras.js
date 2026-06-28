@@ -1,6 +1,4 @@
-// ============================================
-// BANDEIRAS - Versão com imagens (fallback para emojis)
-// ============================================
+import { matches } from './dados.js';
 
 // Mapeamento de sigla para código do país (para imagem)
 const codigoPais = {
@@ -20,37 +18,25 @@ const codigoPais = {
     'BA': 'ba', 'PY': 'py', 'EC': 'ec'
 };
 
-export function getBandeira(sigla) {
-    if (!sigla) return '🏁';
+export function getBandeira(entrada) {
+    if (!entrada) return '🏁';
+    
+    let sigla = entrada;
+    
+    // CORREÇÃO: Removemos a limitação de caracteres.
+    // Agora o sistema sempre checa se o nome procurado existe como seleção.
+    const jogoEncontrado = matches.find(m => m.a === entrada || m.b === entrada);
+    
+    if (jogoEncontrado) {
+        sigla = jogoEncontrado.a === entrada ? jogoEncontrado.fa : jogoEncontrado.fb;
+    }
     
     const codigo = codigoPais[sigla];
     if (codigo) {
-        // Usar imagem SVG do Flagpedia (gratuito)
         return `<img src="https://flagpedia.net/data/flags/icon/72x54/${codigo}.png" 
                      class="flag-img" 
-                     alt="${sigla}" 
+                     alt="${entrada}" 
                      style="width: 24px; height: 18px; vertical-align: middle; display: inline-block;">`;
     }
     return '🏁';
-}
-
-// Versão emoji (fallback se quiser tentar)
-export function getBandeiraEmoji(sigla) {
-    const emojis = {
-        'MX': '🇲🇽', 'KR': '🇰🇷', 'CZ': '🇨🇿', 'ZA': '🇿🇦',
-        'BR': '🇧🇷', 'AR': '🇦🇷', 'DE': '🇩🇪', 'FR': '🇫🇷',
-        'ES': '🇪🇸', 'PT': '🇵🇹', 'GB': '🏴', 'NL': '🇳🇱',
-        'BE': '🇧🇪', 'US': '🇺🇸', 'UY': '🇺🇾', 'CO': '🇨🇴',
-        'JP': '🇯🇵', 'IT': '🇮🇹', 'HR': '🇭🇷', 'SE': '🇸🇪',
-        'DK': '🇩🇰', 'CH': '🇨🇭', 'AT': '🇦🇹', 'TR': '🇹🇷',
-        'PL': '🇵🇱', 'RS': '🇷🇸', 'NO': '🇳🇴', 'SCO': '🏴',
-        'UA': '🇺🇦', 'MA': '🇲🇦', 'SN': '🇸🇳', 'TN': '🇹🇳',
-        'EG': '🇪🇬', 'DZ': '🇩🇿', 'NG': '🇳🇬', 'CM': '🇨🇲',
-        'CI': '🇨🇮', 'GH': '🇬🇭', 'CD': '🇨🇩', 'CV': '🇨🇻',
-        'AU': '🇦🇺', 'IR': '🇮🇷', 'SA': '🇸🇦', 'QA': '🇶🇦',
-        'IQ': '🇮🇶', 'UZ': '🇺🇿', 'JO': '🇯🇴', 'NZ': '🇳🇿',
-        'CA': '🇨🇦', 'PA': '🇵🇦', 'HT': '🇭🇹', 'CW': '🇨🇼',
-        'BA': '🇧🇦', 'PY': '🇵🇾', 'EC': '🇪🇨'
-    };
-    return emojis[sigla] || '🏁';
 }
