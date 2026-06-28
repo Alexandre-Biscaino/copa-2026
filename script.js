@@ -448,12 +448,14 @@ function showConfirm(options) {
 function exportarResultados() {
     const resultados = localStorage.getItem('copa2026_results');
     const tema = localStorage.getItem('copa2026_theme');
+    const overrides = localStorage.getItem('overrideEquipes'); // ADICIONE ISSO
     
     const backup = {
         version: '1.0',
         data: new Date().toISOString(),
         results: resultados ? JSON.parse(resultados) : {},
-        theme: tema || 'dark'
+        theme: tema || 'dark',
+        overrideEquipes: overrides ? JSON.parse(overrides) : {} // ADICIONE ISSO
     };
     
     const jsonStr = JSON.stringify(backup, null, 2);
@@ -496,6 +498,11 @@ function importarResultados() {
                 // Importar resultados
                 if (backup.results) {
                     localStorage.setItem('copa2026_results', JSON.stringify(backup.results));
+                }
+                
+                // Importar overrides de equipes (A CORREÇÃO QUE VOCÊ PRECISA)
+                if (backup.overrideEquipes) {
+                    localStorage.setItem('overrideEquipes', JSON.stringify(backup.overrideEquipes));
                 }
                 
                 // Importar tema (opcional)
