@@ -10,7 +10,37 @@ import { initChaveamento } from './mataMata.js';
 
 let charts = {};
 
-// Obter cor do texto baseada no tema atual
+// ============================================
+// FUNÇÃO QUE UNE TODAS AS FASES (GRUPOS + MATA-MATA)
+// ============================================
+
+function getTodosOsJogos() {
+    const chave = initChaveamento();
+    const mataMata = [
+        ...(chave.dezesseisAvos || []),
+        ...(chave.oitavas || []),
+        ...(chave.quartas || []),
+        ...(chave.semi || []),
+        chave.final,
+        chave.terceiroLugar
+    ].filter(j => j && !j.incompleto && j.timeA && j.timeB);
+
+    const formatados = mataMata.map(j => ({
+        id: j.id,
+        a: j.timeA,
+        b: j.timeB,
+        g: 'MM', // Marcador de Mata-Mata
+        date: j.data,
+        time: j.horario
+    }));
+
+    return [...matches, ...formatados];
+}
+
+// ============================================
+// OBTER COR DO TEXTO BASEADA NO TEMA ATUAL
+// ============================================
+
 function getTextColor() {
     const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
     if (bgColor === '#f0f4f8' || bgColor === '#e2e8f0' || bgColor === '#ffffff') {
@@ -25,72 +55,68 @@ function getGridColor() {
 }
 
 // ============================================
-// CÁLCULO DOS ARTILHEIROS INDIVIDUAIS
+// CÁLCULO DOS ARTILHEIROS INDIVIDUAIS (INTELIGENTE)
 // ============================================
 
 export function calcularArtilheiros() {
     const artilheirosMap = {};
-    const jogosPorJogador = {};
     const timePorJogador = {};
+    const todosJogos = getTodosOsJogos();
     
+    // PASSO 1: Dicionário Inteligente (O sistema aprende os times)
     for (const [matchId, result] of Object.entries(results)) {
         if (!result.artilheiros) continue;
-        
-        // Encontrar a partida correspondente
-        const match = matches.find(m => m.id === matchId);
+        const match = todosJogos.find(m => m.id === matchId);
         if (!match) continue;
         
-        // Parse da string de artilheiros
+        const golsA = result.goalsA || 0;
+        const golsB = result.goalsB || 0;
         const artilheirosList = result.artilheiros.split(',').map(item => item.trim());
         
         artilheirosList.forEach(item => {
-            // Tenta extrair nome e gols no formato "Nome (N)"
+            const matchPattern = item.match(/^(.+?)\s*\((\d+)\)$/);
+            if (matchPattern) {
+                const nome = matchPattern[1].trim();
+                // Se só o Time A fez gol, o sistema grava que o jogador é do Time A
+                if (golsA > 0 && golsB === 0) timePorJogador[nome] = match.a;
+                // Se só o Time B fez gol, o sistema grava que é do Time B
+                else if (golsB > 0 && golsA === 0) timePorJogador[nome] = match.b;
+            }
+        });
+    }
+    
+    // PASSO 2: Contabilizar os Gols usando a memória
+    for (const [matchId, result] of Object.entries(results)) {
+        if (!result.artilheiros) continue;
+        const match = todosJogos.find(m => m.id === matchId);
+        if (!match) continue;
+        
+        const golsA = result.goalsA || 0;
+        const golsB = result.goalsB || 0;
+        const artilheirosList = result.artilheiros.split(',').map(item => item.trim());
+        
+        artilheirosList.forEach(item => {
             const matchPattern = item.match(/^(.+?)\s*\((\d+)\)$/);
             if (matchPattern) {
                 const nome = matchPattern[1].trim();
                 const gols = parseInt(matchPattern[2]) || 0;
                 
-                // Determinar qual time o jogador pertence
-                let time = null;
-                
-                if (!timePorJogador[nome]) {
-                    // Verificar se o artilheiro é mencionado com o time
-                    const timeMatch = item.match(/\(([A-Z]{3})\)/);
-                    if (timeMatch) {
-                        time = timeMatch[1];
-                    } else {
-                        // Inferir pelo placar
-                        const golsA = result.goalsA || 0;
-                        const golsB = result.goalsB || 0;
-                        if (golsA > golsB) {
-                            time = match.a;
-                        } else if (golsB > golsA) {
-                            time = match.b;
-                        } else {
-                            time = match.a; // Fallback
-                        }
-                    }
-                    timePorJogador[nome] = time;
-                } else {
-                    time = timePorJogador[nome];
+                // Busca na memória. Se não achar (1º jogo do time e ambos marcaram), infere.
+                let time = timePorJogador[nome];
+                if (!time) {
+                    time = (golsA >= golsB) ? match.a : match.b;
+                    timePorJogador[nome] = time; // Salva na memória
                 }
                 
                 if (!artilheirosMap[nome]) {
-                    artilheirosMap[nome] = {
-                        nome: nome,
-                        gols: 0,
-                        time: time,
-                        jogos: 0
-                    };
+                    artilheirosMap[nome] = { nome, gols: 0, time, jogos: 0 };
                 }
-                
                 artilheirosMap[nome].gols += gols;
                 artilheirosMap[nome].jogos += 1;
             }
         });
     }
     
-    // Converter para array e ordenar por gols
     return Object.values(artilheirosMap)
         .sort((a, b) => b.gols - a.gols)
         .slice(0, 20);
@@ -102,98 +128,39 @@ export function calcularArtilheiros() {
 
 export function calcularGolsContra() {
     const golsContraMap = {};
-    const timePorJogador = {};
+    const todosJogos = getTodosOsJogos();
     
     for (const [matchId, result] of Object.entries(results)) {
         if (!result.golsContra) continue;
         
-        // Encontrar a partida correspondente
-        const match = matches.find(m => m.id === matchId);
+        const match = todosJogos.find(m => m.id === matchId);
         if (!match) continue;
         
-        // Parse da string de gols contra
         const golsContraList = result.golsContra.split(',').map(item => item.trim());
         
         golsContraList.forEach(item => {
-            // Tenta extrair nome e gols no formato "Nome (N)"
+            let nome = item.trim();
+            let gols = 1;
+            
             const matchPattern = item.match(/^(.+?)\s*\((\d+)\)$/);
             if (matchPattern) {
-                const nome = matchPattern[1].trim();
-                const gols = parseInt(matchPattern[2]) || 0;
-                
-                // Determinar qual time o jogador pertence
-                let time = null;
-                
-                if (!timePorJogador[nome]) {
-                    // Verificar se o jogador é mencionado com o time
-                    const timeMatch = item.match(/\(([A-Z]{3})\)/);
-                    if (timeMatch) {
-                        time = timeMatch[1];
-                    } else {
-                        // Inferir pelo placar - o gol contra é sempre do time que sofreu o gol
-                        // Simplificando: associar ao time que perdeu ou que tem menos gols
-                        const golsA = result.goalsA || 0;
-                        const golsB = result.goalsB || 0;
-                        if (golsA < golsB) {
-                            time = match.a;
-                        } else if (golsB < golsA) {
-                            time = match.b;
-                        } else {
-                            time = match.a; // Fallback
-                        }
-                    }
-                    timePorJogador[nome] = time;
-                } else {
-                    time = timePorJogador[nome];
-                }
-                
-                if (!golsContraMap[nome]) {
-                    golsContraMap[nome] = {
-                        nome: nome,
-                        gols: 0,
-                        time: time,
-                        jogos: 0
-                    };
-                }
-                
-                golsContraMap[nome].gols += gols;
-                golsContraMap[nome].jogos += 1;
-            } else {
-                // Se não encontrar o formato, assume 1 gol
-                const nome = item.trim();
-                
-                // Determinar time para o formato simples
-                let time = null;
-                if (!timePorJogador[nome]) {
-                    const golsA = result.goalsA || 0;
-                    const golsB = result.goalsB || 0;
-                    if (golsA < golsB) {
-                        time = match.a;
-                    } else if (golsB < golsA) {
-                        time = match.b;
-                    } else {
-                        time = match.a;
-                    }
-                    timePorJogador[nome] = time;
-                } else {
-                    time = timePorJogador[nome];
-                }
-                
-                if (!golsContraMap[nome]) {
-                    golsContraMap[nome] = {
-                        nome: nome,
-                        gols: 0,
-                        time: time,
-                        jogos: 0
-                    };
-                }
-                golsContraMap[nome].gols += 1;
-                golsContraMap[nome].jogos += 1;
+                nome = matchPattern[1].trim();
+                gols = parseInt(matchPattern[2]) || 0;
             }
+            
+            // Gol contra é contabilizado para o time que SOFREU o gol
+            const golsA = result.goalsA || 0;
+            const golsB = result.goalsB || 0;
+            let time = (golsA < golsB) ? match.a : match.b;
+            
+            if (!golsContraMap[nome]) {
+                golsContraMap[nome] = { nome, gols: 0, time, jogos: 0 };
+            }
+            golsContraMap[nome].gols += gols;
+            golsContraMap[nome].jogos += 1;
         });
     }
     
-    // Converter para array e ordenar por gols
     return Object.values(golsContraMap)
         .sort((a, b) => b.gols - a.gols)
         .slice(0, 20);
@@ -220,7 +187,9 @@ export function calcularEstatisticas() {
     let faseCampeao = [];
     let isCopaFinalizada = false;
     
-    matches.forEach(match => {
+    const todosJogos = getTodosOsJogos();
+    
+    todosJogos.forEach(match => {
         const res = results[match.id];
         if (!res) return;
         
@@ -250,8 +219,10 @@ export function calcularEstatisticas() {
         golsSofridosPorTime[match.a] = (golsSofridosPorTime[match.a] || 0) + golsB;
         golsSofridosPorTime[match.b] = (golsSofridosPorTime[match.b] || 0) + golsA;
         
-        // Gols por grupo
-        golsPorGrupo[match.g] = (golsPorGrupo[match.g] || 0) + golsA + golsB;
+        // Gols por grupo (apenas para grupos)
+        if (match.g && match.g !== 'MM') {
+            golsPorGrupo[match.g] = (golsPorGrupo[match.g] || 0) + golsA + golsB;
+        }
         
         // Placar mais comum (formato "X-Y")
         const placarStr = `${Math.min(golsA, golsB)}-${Math.max(golsA, golsB)}`;
@@ -671,7 +642,6 @@ function criarGraficoEvolucao(stats) {
         return `${fase}\n(Jogo ${p.jogo})`;
     });
     
-    const backgroundColors = stats.faseCampeao.map(p => coresFase[p.fase] || 'rgba(243, 182, 43, 0.1)');
     const borderColors = stats.faseCampeao.map(p => coresBordaFase[p.fase] || '#f3b62b');
     
     charts.evolucao = new Chart(ctx, {
