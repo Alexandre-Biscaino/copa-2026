@@ -152,7 +152,7 @@ const oitavasTemplate = [
 // Template das quartas
 const quartasTemplate = [
     { id: '97', jogoOrigem1: '89', jogoOrigem2: '90', local: 'BOSTON', horario: '17H', data: '9 JUL' },
-    { id: '98', jogoOrigem1: '93', jogoOrigem2: '94', local: 'LOS ANGELES', horario: '16H', data: '18 JUL' },
+    { id: '98', jogoOrigem1: '93', jogoOrigem2: '94', local: 'LOS ANGELES', horario: '16H', data: '10 JUL' },
     { id: '99', jogoOrigem1: '91', jogoOrigem2: '92', local: 'MIAMI', horario: '18H', data: '11 JUL' },
     { id: '100', jogoOrigem1: '95', jogoOrigem2: '96', local: 'KANSAS CITY', horario: '22H', data: '11 JUL' }
 ];
@@ -164,10 +164,10 @@ const semiTemplate = [
 ];
 
 // Template da final
-const finalTemplate = { id: '103', jogoOrigem1: '101', jogoOrigem2: '102', local: 'MIAMI', horario: '18H', data: '18 JUL' };
+const finalTemplate = { id: '103', jogoOrigem1: '101', jogoOrigem2: '102', local: 'MIAMI', horario: '18H', data: '19 JUL' };
 
 // Template do terceiro lugar
-const terceiroTemplate = { id: '104', jogoOrigem1: '101', jogoOrigem2: '102', local: 'NOVA YORK/NOVA JERSEY', horario: '16H', data: '19 JUL' };
+const terceiroTemplate = { id: '104', jogoOrigem1: '101', jogoOrigem2: '102', local: 'NOVA YORK/NOVA JERSEY', horario: '16H', data: '18 JUL' };
 
 let terceirosUsadosGlobal = [];
 
