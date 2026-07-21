@@ -117,16 +117,17 @@ export function getWinner(match, res) {
         const etB = res.etGoalsB;
         if (etA > etB) winner = "A";
         else if (etB > etA) winner = "B";
-        // Se empatou na prorrogação, vai para pênaltis
-        else if (res.hasPenalties && res.penA !== undefined && res.penB !== undefined) {
-            winner = res.penA > res.penB ? "A" : (res.penB > res.penA ? "B" : null);
-        }
     }
     
-    // Se não houve prorrogação ou não definiu vencedor, usar tempo normal
+    // Se não houve prorrogação ou ela terminou empatada, tempo normal decide
     if (!winner) {
         if (normalA > normalB) winner = "A";
         else if (normalB > normalA) winner = "B";
+    }
+    
+    // Pênaltis decidem em qualquer empate (com ou sem prorrogação registrada)
+    if (!winner && res.hasPenalties && res.penA !== undefined && res.penB !== undefined) {
+        winner = res.penA > res.penB ? "A" : (res.penB > res.penA ? "B" : null);
     }
     
     return winner;

@@ -744,9 +744,12 @@ function abrirModalMataMata(jogo) {
             if (typeof window.renderClassificacao === 'function') {
                 window.renderClassificacao();
             }
-            if (typeof window.renderEstatisticas === 'function') {
-                window.renderEstatisticas();
-            }
+            // NÃO chamar window.renderEstatisticas() aqui: resultados.js -> salvarDados()
+            // já chama window.renderEstatisticas() antes de disparar este callback.
+            // Chamar de novo causa uma corrida entre dois setTimeout() concorrentes
+            // tentando desenhar Chart.js no mesmo <canvas>, o que lança
+            // "Canvas is already in use" e interrompe o resto do render
+            // (inclui o gráfico/tabela de artilheiros individuais).
         });
     });
 }
